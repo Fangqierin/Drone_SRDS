@@ -1,0 +1,9 @@
+# nohup python3 Cover_sum_parition.py 1 par >& /tmp/log_sum_drone_1.txt 2>&1  &
+nohup python3 Cover_min_weight.py 2 weight7 1 >& /tmp/log_sum_drone_2_0.txt 2>&1  &
+nohup python3 Cover_min_weight.py 2 weight7 0.7 >& /tmp/log_sum_drone_2_1.txt 2>&1  &
+nohup python3 Cover_min_weight.py 2 weight7 0.5 >& /tmp/log_sum_drone_2_2.txt 2>&1  &
+nohup python3 Cover_min_weight.py 2 weight7 0.34 >& /tmp/log_sum_drone_2_2.txt 2>&1  &
+nohup python3 Cover_min_weight.py 4 weight7 1 >& /tmp/log_sum_drone_4_0.txt 2>&1  &
+nohup python3 Cover_min_weight.py 4 weight7 0.7 >& /tmp/log_sum_drone_4_1.txt 2>&1  &
+nohup python3 Cover_min_weight.py 4 weight7 0.5 >& /tmp/log_sum_drone_4_2.txt 2>&1  &
+nohup python3 Cover_min_weight.py 4 weight7 0.34 >& /tmp/log_sum_drone_4_2.txt 2>&1  &
