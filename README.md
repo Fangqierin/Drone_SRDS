@@ -1,4 +1,4 @@
 # Drone_SRDS
 
 ## 1. Create Building Model
-To model the builing we need file:
+1) building structure file--> example: data/dbh_stu.csv
