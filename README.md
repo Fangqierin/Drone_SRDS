@@ -37,9 +37,17 @@ r,w,d,h
 ```
 This file give the Room ID, and its width, depth and height. 
 
-
-
-
+### 4) Correlation between room and window (see file: data/window_room.csv). 
+```
+w r
+0 0
+...
+3 3,s1
+4 4,5
+...
+30 41
+```
+This file tells which room each window locates in (two rooms may share one window). 
 
 
 
