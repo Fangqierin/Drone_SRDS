@@ -1,7 +1,7 @@
 # Drone_SRDS
 
 ## 1. Create Building Model (We use the DBH building as an example)
-<img src="building_stu.png" width="500"> 
+<img src="building_sample.png" width="500"> 
 
 ### 1) Building structure file (see file: data/dbh_stu.csv). 
 
