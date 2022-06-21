@@ -1,10 +1,7 @@
 # Drone_SRDS
 
-i)  MongoDB folder contains the code for creating dashboard.
+i) MongoDB folder contains the code for creating the dashboard.
 
-ii) Tello_Drone gives the code for tello drone controlling. 
+ii) Tello_Drone gives the code for Tello drone controlling.
 
-iii) Pretreat gives the code for SRDS paper. 
-
-
-
+iii) Pretreat gives the code for SRDS paper.
