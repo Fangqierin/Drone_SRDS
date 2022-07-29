@@ -7,10 +7,10 @@ our grid GUI
 
 TESTING = False
 
-from cv2 import inpaint
+#from cv2 import inpaint
 import pygame
 import math
-import time
+#import time
 
 
 # class that represents an input box
@@ -92,7 +92,7 @@ class Grid:
         
         # pygame
         pygame.init()
-        self.screen = pygame.display.set_mode((1400, 750))
+        self.screen = pygame.display.set_mode((900, 600))
         self.screen.fill((255,255,255))
 
         # Variable that controls the scale between cm and pixels
@@ -147,7 +147,7 @@ class Grid:
 
         
 
-    def plot_grid_lines_rel_to_center(self, color: str, speed_scale: float = .5):
+    def plot_grid_lines_rel_to_center(self, color: str, size_cm: int = 50):
         '''
         Plots the grid lines with the given color and with
         respect to the drone's speed
@@ -157,7 +157,7 @@ class Grid:
         width, height = self.screen.get_size()
 
         # grid size (in pixels)
-        px_grid_size = self.scale_factor * speed_scale * self.drone.get_speed()
+        px_grid_size = self.scale_factor * size_cm
 
 
         # Draw lines at the center outward
@@ -228,6 +228,8 @@ class Grid:
         '''
         One tick of the grid simulation
         '''
+
+        # self.drone.stream_current_frame()
 
         self.screen.fill((255,255,255))
 
