@@ -343,7 +343,7 @@ class Tello_drone:
         # stores path to image and other relevant metadata in the database
         client["images"].currentImages.insert_one(
             {
-                "image": f'$/test_images/image_waypoint_{num_images}.png',
+                "path": f'$/test_images/image_waypoint_{num_images}.png',
                 "location": f'({round(self.x)},{round(self.y)},{round(self.z)})',
                 "time": "to be implemented"
             }
