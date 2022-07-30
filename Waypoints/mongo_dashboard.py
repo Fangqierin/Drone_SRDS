@@ -29,13 +29,22 @@ GRID_DIMENSIONS = (200,150)
 # Connect to local server
 client = MongoClient("mongodb://127.0.0.1:27017/")
 
+#client = MongoClient("mongodb://169.234.54.191:27017/")
+
+
 # Create database called images
 imagedb = client["images"]
 # Create Collection (table) called currentImages
 imageCollection = imagedb.currentImages
 
 
-# Create database called fireMap
+# Create database called waypoints
+waypointsdb = client["waypoints"]
+# Create Collection (table) called currentWaypoints
+waypointsCollection = imagedb.currentWaypoints
+
+
+# Create database called fireMap for our grid
 firedb = client["fireMap"]
 # Create Collection (table) called grids
 gridCollection = firedb.gridStates
@@ -92,7 +101,7 @@ def create_Grids(gridSize, client, dimensions):
             'gridNum': i,
             'location': (gridSize*w-cx, cy-gridSize*l),
             'fireState': 0.0,
-            'gridSize': gridSize
+            'gridSize': gridSize,
         })
         w += 1
 
@@ -166,7 +175,7 @@ if __name__ == "__main__":
 
     app.layout = html.Div([
 
-        html.H4("Image Database"),
+        html.H4("Image Table"),
 
         # Image datatable
         html.Div(id='image-datatable', children=[]),
@@ -179,7 +188,18 @@ if __name__ == "__main__":
 
         html.Div(style={ "height":"25px" }),
 
-        html.H4("Grid Database"),
+
+        # Waypoints datatable
+        html.H4("Waypoints Table"),
+
+        html.Div(id='waypoints-datatable', children = []),
+
+        dcc.Interval(id='waypoints_interval_db', interval=86400000 * 7, n_intervals=0),
+
+        html.Div(style={ "height":"25px" }),
+
+
+        html.H4("Grid Table"),
 
         # Grids datatable
         html.Div(id='grid-datatable', children = []),
@@ -188,9 +208,6 @@ if __name__ == "__main__":
         dcc.Interval(id='fire_interval_db', interval=86400000 * 7, n_intervals=0),
 
         html.Div(style={ "height":"25px" }),
-
-        # Creates a map representation for our grid states
-        #create_grid_map(GRID_SIZE, GRID_DIMENSIONS)
 
         # map of grids
         html.Div(id='fire-map-grids', children = [], 
@@ -202,8 +219,8 @@ if __name__ == "__main__":
 
     ])
 
-    # triggers.register_update_trigger(trigger_update_fire_map, 'fireMap', 'gridStates')
 
+    
     # Display Image Datatable with data from Mongo database *************************
     @app.callback(Output('image-datatable', 'children'),
                 [Input('image_interval_db', 'n_intervals')])
@@ -268,6 +285,41 @@ if __name__ == "__main__":
                             'width': '100px', 'maxWidth': '100px'},
             )
         ]
+    
+
+
+    # Display Waypoints Datatable with data from Mongo database *************************
+    @app.callback(Output('waypoints-datatable', 'children'),
+                [Input('waypoints_interval_db', 'n_intervals')])
+    def populate_fire_datatable(n_intervals):
+        print(n_intervals)
+        # Convert the Collection (table) date to a pandas DataFrame
+        df = pd.DataFrame(list(waypointsCollection.find()))
+        #Drop the _id column generated automatically by Mongo
+        df = df.iloc[:, 1:]
+        print(df.head(20))
+
+        return [
+            dash_table.DataTable(
+                id='waypoints-table',
+                columns=[{
+                    'name': x,
+                    'id': x,
+                } for x in df.columns],
+                data=df.to_dict('records'),
+                editable=True,
+                row_deletable=True,
+                filter_action="native",
+                filter_options={"case": "sensitive"},
+                sort_action="native",  # give user capability to sort columns
+                sort_mode="single",  # sort across 'multi' or 'single' columns
+                page_current=0,  # page number that user is on
+                page_size=6,  # number of rows visible per page
+                style_cell={'textAlign': 'left', 'minWidth': '100px',
+                            'width': '100px', 'maxWidth': '100px'},
+            )
+        ]
+    
     
 
 
