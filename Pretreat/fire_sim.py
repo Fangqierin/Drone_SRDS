@@ -445,9 +445,7 @@ def Sim_fire(seed,a,outputfile,slot):
         for i in tmp:
             floor=i//len(win_layer)
             id=i%len(win_layer)
-            opens.append((floor,id))
-            
-            
+            opens.append((floor,id))       
             ############################ Change the floor number. 
     # print(f"opens",opens)
     open_rooms=[]
@@ -482,6 +480,52 @@ def Sim_fire(seed,a,outputfile,slot):
     sim=Simulator(rooms,fire_source,human_exist,opens,len(win_layer),floor_num,slot)
     sim.simulate(0,40,outputfile,seed)
 
+
+def Sim_fire2(st,et,seed,a,outputfile,slot):
+    #print(f"source {a} {seed} {slot}")
+    random.seed(seed)
+    windows=[random.random()<P_open for i in range(len(list(win_to_rooms.keys()))*floor_num)]
+    #print(f"seessss", range(len(list(win_to_rooms.keys()))*floor_num))
+    tmp=[i for i in range(len(windows)) if windows[i]==True]
+    opens=[]
+    if len(tmp)!=0:
+        for i in tmp:
+            floor=i//len(win_layer)
+            id=i%len(win_layer)
+            opens.append((floor,id))       
+            ############################ Change the floor number. 
+    # print(f"opens",opens)
+    open_rooms=[]
+    for i,j in opens:
+        for k in win_to_rooms.get(j):
+            open_rooms.append((i,k))
+    ##################################### open room
+    rooms=[{}for i in range(floor_num)]
+    room_num=len(room_AF)
+    human_exist=[]
+    for i in range(floor_num):
+        for j in room_set:
+            tmp=room(floor=i,id=j,j_fd=j_fd,j_gr=j_gr)
+            tmp.Get_adjacent(room_set, win_to_rooms, win_c_dict,room_num)
+            #random.seed(time.time())
+            if (i,j) in open_rooms:
+                tmp.open_window=True
+            aa=random.random()
+            if aa<P_human:
+                human_exist.append((i,j))
+                tmp.human_exist=True
+            rooms[i][j]=tmp
+    #print(f"human exist",human_exist
+    fire_source=[]
+    for i in a:
+        floor=i//room_num
+        id=i%room_num
+        #print(f"fire source in Sim",i,(floor,room_set[id]))
+        fire_source.append((floor,room_set[id]))
+        rooms[floor][room_set[id]].add_fire(if_flash=True)
+    #print(f" see roome ",room_set,room_num,fire_source)
+    sim=Simulator(rooms,fire_source,human_exist,opens,len(win_layer),floor_num,slot)
+    sim.simulate(st,et,outputfile,seed)
     
 #Sim_fire(seed,a,outputfile,slot)
 #Sim_fire(6,[293]," ",1)
