@@ -39,7 +39,7 @@ def detect_fire(path: str, output: str) -> list:
     # Seperates the fire areas from everything else
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 
-    lower_red = np.array([0,40,245])
+    lower_red = np.array([0,30,240])
     upper_red = np.array([255,255,255])
 
     mask = cv2.inRange(hsv, lower_red, upper_red)
@@ -114,10 +114,12 @@ def calc_location_fire(location, fire_list: int = []):
     # We first calculate the length and width of the area captured by the drone
 
     # we must adjust the calculation with respect to the mirror
-    mirror_constant = 0.85
+    mirror_constant = 0.5
     diagonal_length = 2 * 0.87852146605 * location[2] * mirror_constant #0.87852146605 = cos(41.3 degrees)
     width = diagonal_length * 0.8 
-    #length = diagonal_length * 0.6
+    length = diagonal_length * 0.6
+
+    print(length, width)
 
     # Then we calculate where the fires are
     # conversion between pixel and cm
@@ -147,14 +149,12 @@ if __name__ == "__main__":
     i = 0
 
     for path in glob("./test_images/*"):
-
+        print(path)
 
         #detect_grid(path, f'./test_images_results/image_waypoint_{i}_results.png')
 
         #detect_fire(f'./test_images_results/image_waypoint_{i}_results.png', f'./test_images_results/image_waypoiny_{i}_results.png')
 
         fire_list = detect_fire(path, f'./test_images_results/image_waypoint_{i}_results.png')
-
-        print(calc_location_fire((0,0,200), fire_list))
 
         i += 1

@@ -23,8 +23,8 @@ from image_processing import calc_location_fire
 from glob import glob
 
 # grid size (in cm)
-GRID_SIZE = 12.5
-GRID_DIMENSIONS = (200,150)
+GRID_SIZE = 25
+GRID_DIMENSIONS = (150,200)
 
 # Connect to local server
 client = MongoClient("mongodb://127.0.0.1:27017/")
@@ -41,7 +41,7 @@ imageCollection = imagedb.currentImages
 # Create database called waypoints
 waypointsdb = client["waypoints"]
 # Create Collection (table) called currentWaypoints
-waypointsCollection = imagedb.currentWaypoints
+waypointsCollection = waypointsdb.currentWaypoints
 
 
 # Create database called fireMap for our grid
@@ -54,33 +54,37 @@ def trigger_image_processing(op_document):
     '''
     triggers image processing for whenever an image is stored
     '''
-    print("trigger_image_processing called")
+    #print("trigger_image_processing called")
+
+    num_images = len(glob("./test_images_results/*"))
 
 
     fire_list = detect_fire(op_document['o']['path'],
-                'test_images_results/image_waypoint_0_results.png')
+                f'./test_images_results/image_waypoint_{num_images}_results.png')
     
     fire_list = calc_location_fire(op_document['o']['location'], fire_list)
 
+    print()
     print(fire_list)
+    print()
 
     for fire in fire_list:
 
         # top left
         tLx, tLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
-        gridCollection.update_one({'location': (tLx,tLy)},{ '$set': {'fireState': 1.0}})
+        gridCollection.update_one({'location': (tLx,tLy)},{ '$set': {'state': 1.0}})
 
         # top right
         tRx, tRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
-        gridCollection.update_one({'location': (tRx,tRy)},{ '$set': {'fireState': 1.0}})
+        gridCollection.update_one({'location': (tRx,tRy)},{ '$set': {'state': 1.0}})
 
         # bottom left
         bLx, bLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
-        gridCollection.update_one({'location': (bLx,bLy)},{ '$set': {'fireState': 1.0}})
+        gridCollection.update_one({'location': (bLx,bLy)},{ '$set': {'state': 1.0}})
 
         # bottom right
         bRx, bRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
-        gridCollection.update_one({'location': (bRx,bRy)},{ '$set': {'fireState': 1.0}})
+        gridCollection.update_one({'location': (bRx,bRy)},{ '$set': {'state': 1.0}})
         
 
 
@@ -100,11 +104,10 @@ def create_Grids(gridSize, client, dimensions):
         gridCollection.insert_one({
             'gridNum': i,
             'location': (gridSize*w-cx, cy-gridSize*l),
-            'fireState': 0.0,
-            'gridSize': gridSize,
+            'state': 0.0,
+            'time': -1,
         })
         w += 1
-
 
 
 def _create_card(gridNum, grids):
@@ -113,18 +116,19 @@ def _create_card(gridNum, grids):
     grid map
     '''
     location = grids[gridNum-1]['location']
-    fireState = grids[gridNum-1]['fireState']
+    fireState = grids[gridNum-1]['state']
 
-    print(location, fireState)
+    #print(location, fireState)
 
     return dbc.Card(
         dbc.CardBody(
             [
-                #html.P(f'Grid {gridNum} {location}', id=f"Grid-{gridNum}", style={"color":"white", "font-size": "9px"}),
-                html.P(fireState, id=f"Grid-{gridNum}-state", style={"color":"white"})
+                html.P(f'{location}', id=f"Grid-{gridNum}", style={"color":"white", "font-size": "6px"}),
+                #html.P(fireState, id=f"Grid-{gridNum}-state", style={"color":"white"})
             ],
         ),
         color = "danger" if fireState == 1 else "success",
+        style = {"height": f"{round(GRID_SIZE * 3.2)}px", "width": f"{round(GRID_SIZE * 3.2)}px"}
     )
 
 
@@ -163,11 +167,20 @@ if __name__ == "__main__":
 
     triggers.tail_oplog()
 
+    waypointsCollection.delete_many({})
 
     gridCollection.delete_many({})
 
-    create_Grids(GRID_SIZE, client, GRID_DIMENSIONS)
+    waypointsCollection.insert_many([{"x": "0", "y": "-25", "z": "110", "round": "0"},
+                                    {"x": "50", "y": "-25", "z": "110", "round": "0"},
+                                    {"x": "50", "y": "25", "z": "110", "round": "0"},
+                                    {"x": "0", "y": "25", "z": "110", "round": "0"},
+                                    {"x": "-50", "y": "25", "z": "110", "round": "0"},
+                                    {"x": "-50", "y": "75", "z": "110", "round": "0"},
+                                    {"x": "0", "y": "75", "z": "110", "round": "0"},
+                                    {"x": "50", "y": "75", "z": "110", "round": "0"},])
 
+    create_Grids(GRID_SIZE, client, GRID_DIMENSIONS)
 
 
     app = JupyterDash(__name__, suppress_callback_exceptions=True,
@@ -183,8 +196,6 @@ if __name__ == "__main__":
         # Refreshes Images datatable with mongodb data; activated once/week or when page refreshed
         dcc.Interval(id='image_interval_db', interval=86400000 * 7, n_intervals=0),
 
-        html.Button("Save to Image Database", id="save-it"),
-        html.Button('Add Row', id='adding-rows-btn', n_clicks=0),
 
         html.Div(style={ "height":"25px" }),
 
@@ -195,6 +206,11 @@ if __name__ == "__main__":
         html.Div(id='waypoints-datatable', children = []),
 
         dcc.Interval(id='waypoints_interval_db', interval=86400000 * 7, n_intervals=0),
+
+        html.Button("Save to Waypoints Database", id="save-it"),
+        html.Button('Add Row', id='adding-rows-btn', n_clicks=0),
+
+        html.Div(id='placeholder', children = []),
 
         html.Div(style={ "height":"25px" }),
 
@@ -211,26 +227,26 @@ if __name__ == "__main__":
 
         # map of grids
         html.Div(id='fire-map-grids', children = [], 
-            style={"align": "center", "height": f"{round(GRID_DIMENSIONS[1]/GRID_DIMENSIONS[0]*700)}px", 
-                "width": f"{round(GRID_DIMENSIONS[0]/GRID_DIMENSIONS[1]* 700)}px",
+            style={"align": "center", "height": "640px", 
+                "width": "480px",
                 "text-align": "center", "margin": "0 auto"}),
 
         dcc.Interval(id='fire_map_grids_interval', interval=86400000 * 7, n_intervals=0)
 
     ])
 
-
+    #f"{round(GRID_DIMENSIONS[1]/float(GRID_DIMENSIONS[0])*700)}
     
     # Display Image Datatable with data from Mongo database *************************
     @app.callback(Output('image-datatable', 'children'),
                 [Input('image_interval_db', 'n_intervals')])
     def populate_image_datatable(n_intervals):
-        print(n_intervals)
+        #print(n_intervals)
         # Convert the Collection (table) date to a pandas DataFrame
         df = pd.DataFrame(list(imageCollection.find()))
         #Drop the _id column generated automatically by Mongo
         df = df.iloc[:, 1:]
-        print(df.head(20))
+        #print(df.head(20))
 
         return [
             dash_table.DataTable(
@@ -254,16 +270,16 @@ if __name__ == "__main__":
         ]
     
     
-    # Display Fire Datatable with data from Mongo database *************************
+    # Display Grid Datatable with data from Mongo database *************************
     @app.callback(Output('grid-datatable', 'children'),
                 [Input('fire_interval_db', 'n_intervals')])
     def populate_fire_datatable(n_intervals):
-        print(n_intervals)
+        #print(n_intervals)
         # Convert the Collection (table) date to a pandas DataFrame
         df = pd.DataFrame(list(gridCollection.find()))
         #Drop the _id column generated automatically by Mongo
         df = df.iloc[:, 1:]
-        print(df.head(20))
+        #print(df.head(20))
 
         return [
             dash_table.DataTable(
@@ -292,12 +308,12 @@ if __name__ == "__main__":
     @app.callback(Output('waypoints-datatable', 'children'),
                 [Input('waypoints_interval_db', 'n_intervals')])
     def populate_fire_datatable(n_intervals):
-        print(n_intervals)
+        #print(n_intervals)
         # Convert the Collection (table) date to a pandas DataFrame
         df = pd.DataFrame(list(waypointsCollection.find()))
         #Drop the _id column generated automatically by Mongo
         df = df.iloc[:, 1:]
-        print(df.head(20))
+        #print(df.head(20))
 
         return [
             dash_table.DataTable(
@@ -327,36 +343,38 @@ if __name__ == "__main__":
     @app.callback(Output('fire-map-grids', 'children'),
                 [Input('fire_map_grids_interval', 'n_intervals')])
     def populate_fire_datatable(n_intervals):
-        print(n_intervals)
+        #print(n_intervals)
         df = list(gridCollection.find())
 
         return create_grid_map(GRID_SIZE, GRID_DIMENSIONS, df)
 
 
-    # Add new rows to Image DataTable ***********************************************
+    # Add new rows to Waypoints DataTable ***********************************************
     @app.callback(
-        Output('image-table', 'data'),
+        Output('waypoints-table', 'data'),
         [Input('adding-rows-btn', 'n_clicks')],
-        [State('image-table', 'data'),
-        State('image-table', 'columns')],
+        [State('waypoints-table', 'data'),
+        State('waypoints-table', 'columns')],
     )
     def add_row(n_clicks, rows, columns):
+        print("TESTING 1")
         if n_clicks > 0:
             rows.append({c['id']: '' for c in columns})
         return rows
 
 
-    # Save new Image DataTable data to the Mongo database ***************************
+    # Save new Waypoints DataTable data to the Mongo database ***************************
     @app.callback(
         Output("placeholder", "children"),
         Input("save-it", "n_clicks"),
-        State("image-table", "data"),
+        State("waypoints-table", "data"),
         prevent_initial_call=True
     )
     def save_data(n_clicks, data):
+        print("TESTING 2")
         dff = pd.DataFrame(data)
-        imageCollection.delete_many({})
-        imageCollection.insert_many(dff.to_dict('records'))
+        waypointsCollection.delete_many({})
+        waypointsCollection.insert_many(dff.to_dict('records'))
         return ""
 
 

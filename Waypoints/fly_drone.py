@@ -18,33 +18,47 @@ if __name__ == "__main__":
     # grid
     # grid = Grid(main_drone)
     try:
-        pygame.init()
-        screen = pygame.display.set_mode((900, 600))
+        # pygame.init()
+        # screen = pygame.display.set_mode((900, 600))
 
-        main_drone = Tello_drone()
+        main_drone = Tello_drone(0, -50)
 
         running = True
 
-        main_drone.add_waypoints_json("waypoints.json")
+        # main_drone.add_waypoints_json("waypoints.json")        
+        cRound = 0
+        check = main_drone.add_waypoints_database(f"{cRound}")
+        cRound = 1
 
         frame = main_drone.drone.get_frame_read().frame
         cv2.imshow("Image", frame)
-        cv2.waitKey(8000)
+        cv2.waitKey(15000)
         cv2.destroyAllWindows()
 
-        screen = pygame.display.set_mode((900, 600))
+        # screen = pygame.display.set_mode((900, 600))
 
         main_drone.takeoff()
 
+
+
+        main_drone.move(True)
+        
+
         while running:
+            
+            if main_drone.get_current_waypoint() == 0:
+                # main_drone.hover()
+                main_drone.reset_waypoints()
+                check = main_drone.add_waypoints_database(f"{cRound}")
+                if check: cRound+=1
 
-            main_drone.move()
+            main_drone.move(check)
 
-            events = pygame.event.get()
-            for event in events:
-                if event.type == pygame.QUIT:
-                    main_drone.drone.land()
-                    running = False
+            # events = pygame.event.get()
+            # for event in events:
+            #     if event.type == pygame.QUIT:
+            #         main_drone.drone.land()
+            #         running = False
 
 
             #running = grid.tick()
