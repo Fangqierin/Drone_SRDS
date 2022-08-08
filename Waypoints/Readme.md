@@ -1,4 +1,4 @@
-To the new Dashboard: \\
+To the new Dashboard: 
 
 First run 
 
