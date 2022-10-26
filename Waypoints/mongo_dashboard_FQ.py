@@ -51,41 +51,41 @@ EFACollection = firedb.wpEFA
 
 
 
-def trigger_image_processing(op_document):
-    '''
-    triggers image processing for whenever an image is stored
-    '''
-    #print("trigger_image_processing called")
+# def trigger_image_processing(op_document):
+#     '''
+#     triggers image processing for whenever an image is stored
+#     '''
+#     #print("trigger_image_processing called")
 
-    num_images = len(glob("./test_images_results/*"))
+#     num_images = len(glob("./test_images_results/*"))
 
 
-    fire_list = detect_fire(op_document['o']['path'],
-                f'./test_images_results/image_waypoint_{num_images}_results.png')
+#     fire_list = detect_fire(op_document['o']['path'],
+#                 f'./test_images_results/image_waypoint_{num_images}_results.png')
     
-    fire_list = calc_location_fire(op_document['o']['location'], fire_list)
+#     fire_list = calc_location_fire(op_document['o']['location'], fire_list)
 
-    print()
-    print(fire_list)
-    print()
+#     print()
+#     print(fire_list)
+#     print()
 
-    for fire in fire_list:
+#     for fire in fire_list:
 
-        # top left
-        tLx, tLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
-        gridCollection.update_one({'location': (tLx,tLy)},{ '$set': {'state': 1.0}})
+#         # top left
+#         tLx, tLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
+#         gridCollection.update_one({'location': (tLx,tLy)},{ '$set': {'state': 1.0}})
 
-        # top right
-        tRx, tRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
-        gridCollection.update_one({'location': (tRx,tRy)},{ '$set': {'state': 1.0}})
+#         # top right
+#         tRx, tRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
+#         gridCollection.update_one({'location': (tRx,tRy)},{ '$set': {'state': 1.0}})
 
-        # bottom left
-        bLx, bLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
-        gridCollection.update_one({'location': (bLx,bLy)},{ '$set': {'state': 1.0}})
+#         # bottom left
+#         bLx, bLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
+#         gridCollection.update_one({'location': (bLx,bLy)},{ '$set': {'state': 1.0}})
 
-        # bottom right
-        bRx, bRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
-        gridCollection.update_one({'location': (bRx,bRy)},{ '$set': {'state': 1.0}})
+#         # bottom right
+#         bRx, bRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
+#         gridCollection.update_one({'location': (bRx,bRy)},{ '$set': {'state': 1.0}})
         
 
 def create_Grids(gridSize, client, dimensions):
@@ -179,16 +179,16 @@ def create_grid_map(gridSize, dimensions, grids):
 if __name__ == "__main__":
 
     # triggers
-    triggers = MongoTrigger(client)
+    #triggers = MongoTrigger(client)
     
     
     #Statetrigger = MongoTrigger(client)
     
-    triggers.register_insert_trigger(trigger_image_processing, 'images', 'currentImages')
+    #triggers.register_insert_trigger(trigger_image_processing, 'images', 'currentImages')
     
     
     
-    triggers.tail_oplog()
+    #triggers.tail_oplog()
     
     #Statetrigger.tail_oplog()
     
@@ -490,7 +490,7 @@ if __name__ == "__main__":
 
 
     app.run_server(mode='jupyterlab')
-    triggers.stop_tail()
+    #triggers.stop_tail()
 
 
 
