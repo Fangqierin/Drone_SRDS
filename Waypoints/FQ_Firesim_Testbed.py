@@ -5,7 +5,7 @@ import sys
 import geopandas as gpd
 sys.path.append('../../../')
 #from cpp_algorithms.common_helpers import imshow, imshow_scatter
-from bcd_helper import imshow, imshow_scatter
+#from bcd_helper import imshow, imshow_scatter
 from shapely.geometry import Point, Polygon
 from pathlib import Path
 from pyproj import Transformer
@@ -305,8 +305,9 @@ if __name__ == "__main__":
     simdur=120
     TM=TaskManager(Missions,theta=9, plantime=simdur) # Create the task manager! 
 
+    client = MongoClient("mongodb://127.0.0.1:27017/")
     
-    client = MongoClient("mongodb://169.234.54.191:27017/")
+    #client = MongoClient("mongodb://169.234.54.191:27017/")
 
     
     Statetrigger = MongoTrigger(client)

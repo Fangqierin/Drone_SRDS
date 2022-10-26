@@ -29,9 +29,9 @@ GRID_SIZE = 25
 GRID_DIMENSIONS = (150,200)
 
 # Connect to local server
-#client = MongoClient("mongodb://127.0.0.1:27017/")
+client = MongoClient("mongodb://127.0.0.1:27017/")
 
-client = MongoClient("mongodb://169.234.54.191:27017/")
+#client = MongoClient("mongodb://169.234.54.191:27017/")
 
 # Create database called images
 imagedb = client["images"]

@@ -31,17 +31,19 @@ import cv2
 
 # from os import remove
 from glob import glob
+from pymongo import MongoClient
+from image_processing import detect_fire
+from image_processing import calc_location_fire
 
-from mongo_dashboard import client 
+from mongo_dashboard_FQ import GRID_SIZE
 
+client = MongoClient("mongodb://127.0.0.1:27017/")
 
 
 class Tello_drone:
 
     # NOTE: COORDINATES ARE MEASURED IN CM
     def __init__(self, i_x: int = 0, i_y: int = 0, i_z: int = 90,):
-        #linear_speed: float = 8.0, angular_speed: float = 36.0, 
-        #interval: float =  10.0/8.0, yaw = 0):
 
         # drone
         self.drone = tello.Tello()
@@ -49,7 +51,6 @@ class Tello_drone:
 
         self.drone.streamon()
         
-
         # coordinates
         self.x = i_x
         self.y = i_y
@@ -58,9 +59,6 @@ class Tello_drone:
         # because that is the takeoff altitude and we want the drone the
         # first waypoint to be its starting position after takeoff
         self.z = i_z
-
-        # # current angle (in radians) the drone is traveling in
-        # self.angle = 0
 
         # list of waypoints the drone must fly to
         # includes the start as the first waypoint
@@ -399,19 +397,6 @@ class Tello_drone:
         '''
         Moves the drone along the current path
         '''
-
-        '''
-        NOTE: THIS IS NOT THE MOST EFFICIENT IMPLEMENTATION
-        THIS IS SIMPLY THE EASIEST IMPLEMENTATION
-
-        INSTEAD OF MOVING ALONG THE 3D VECTOR BETWEEN TWO POINTS, 
-        DUE TO ROUNDING LIMITATIONS OUR DRONE WILL JUST MOVE SEPERATELY
-        BETWEEN ITS X AND Y MOVEMENT VS ITS Z MOVEMENT INSTEAD OF MOVING
-        WITH RESPECT TO ALL 3 AT THE SAME TIME
-
-        IF THE DRONE REACHES ONE X AND Y BEFORE IT REACHES Z IT WILL JUST
-        PURELY FLY IN THE Z DIRECTION TO CORRECT THIS AND VICE VERSA
-        '''
         
         # if we reach the next waypoint
         if len(self.waypoints) >= 2:
@@ -492,13 +477,6 @@ class Tello_drone:
         # stores image locally
         cv2.imwrite(f'test_images/image_waypoint_{num_images}.png', frame)
 
-        # crops image
-        # image_processing.crop(f'test_images/image_waypoint_{num_images}.png',0,600,0,900)
-
-        # processes image
-        # image_processing.detect_fire(f'test_images/image_waypoint_{num_images}.png', 
-        #                             f'test_images_results/image_waypoint_{num_images}_results.png')
-
         # stores path to image and other relevant metadata in the database
         client["images"].currentImages.insert_one(
             {
@@ -507,6 +485,7 @@ class Tello_drone:
                 "time": "to be implemented"
             }
         )
+        self.image_processing(frame)
 
 
 
@@ -524,6 +503,45 @@ class Tello_drone:
         # Returns the current waypoint of the drone
         return self.current_waypoint
     
+    def image_processing(self, image):
+        '''
+        triggers image processing for whenever an image is stored
+        '''
+        #print("trigger_image_processing called")
+
+        #num_images = len(glob("./test_images_results/*"))
+
+
+        fire_list = detect_fire(image)
+
+        fire_list = calc_location_fire((self.x, self.y, self.z), fire_list)
+
+        print()
+        print(fire_list)
+        print()
+
+        firedb = client["fireMap"]
+        gridCollection = firedb.gridStates
+
+        for fire in fire_list:
+
+            # top left
+            tLx, tLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
+            gridCollection.update_one({'location': (tLx,tLy)},{ '$set': {'state': 1.0}})
+
+            # top right
+            tRx, tRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
+            gridCollection.update_one({'location': (tRx,tRy)},{ '$set': {'state': 1.0}})
+
+            # bottom left
+            bLx, bLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
+            gridCollection.update_one({'location': (bLx,bLy)},{ '$set': {'state': 1.0}})
+
+            # bottom right
+            bRx, bRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
+            gridCollection.update_one({'location': (bRx,bRy)},{ '$set': {'state': 1.0}})
+            
+
 
     # def get_speed(self):
     #     # Returns the speed of the drone
