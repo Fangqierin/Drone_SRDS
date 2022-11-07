@@ -16,8 +16,11 @@ if __name__ == "__main__":
         running = True
 
         cRound = 0
-        check = main_drone.add_waypoints_database(f"{cRound}")
+        check = main_drone.add_waypoints_database(cRound)
         cRound = 1
+
+        print("TESTING")
+        print(main_drone.waypoints)
 
         frame = main_drone.drone.get_frame_read().frame
         cv2.imshow("Image", frame)

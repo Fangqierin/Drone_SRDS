@@ -37,7 +37,8 @@ from image_processing import calc_location_fire
 
 from mongo_dashboard_FQ import GRID_SIZE
 
-client = MongoClient("mongodb://127.0.0.1:27017/")
+#client = MongoClient("mongodb://127.0.0.1:8050/")
+from mongo_dashboard_FQ import client
 
 
 class Tello_drone:
@@ -173,7 +174,7 @@ class Tello_drone:
     def add_waypoints_database(self, currRound):
         # adds all of the waypoints from the database (client)
 
-        waypoints = list(client["waypoints"].currentWaypoints.find({"round": currRound}))
+        waypoints = list(client["waypoints"].currentWaypoints.find({"Round": currRound}))
 
         for waypoint in waypoints:
             new_waypoint = (int(waypoint['x']),int(waypoint['y']),int(waypoint['z']))
@@ -509,10 +510,10 @@ class Tello_drone:
         '''
         #print("trigger_image_processing called")
 
-        #num_images = len(glob("./test_images_results/*"))
+        num_images = len(glob("./test_images_results/*"))
 
 
-        fire_list = detect_fire(image)
+        fire_list = detect_fire(image, f'./test_images_results/image_waypoint_{num_images}_results.png')
 
         fire_list = calc_location_fire((self.x, self.y, self.z), fire_list)
 
@@ -527,19 +528,19 @@ class Tello_drone:
 
             # top left
             tLx, tLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
-            gridCollection.update_one({'location': (tLx,tLy)},{ '$set': {'state': 1.0}})
+            gridCollection.update_one({'Location': (tLx,tLy)},{ '$set': {'State': 1.0}})
 
             # top right
             tRx, tRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round(fire[1]/GRID_SIZE)
-            gridCollection.update_one({'location': (tRx,tRy)},{ '$set': {'state': 1.0}})
+            gridCollection.update_one({'Location': (tRx,tRy)},{ '$set': {'State': 1.0}})
 
             # bottom left
             bLx, bLy = GRID_SIZE * round(fire[0]/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
-            gridCollection.update_one({'location': (bLx,bLy)},{ '$set': {'state': 1.0}})
+            gridCollection.update_one({'Location': (bLx,bLy)},{ '$set': {'State': 1.0}})
 
             # bottom right
             bRx, bRy = GRID_SIZE * round((fire[0]+fire[2])/GRID_SIZE), GRID_SIZE * round((fire[1]+fire[3])/GRID_SIZE)
-            gridCollection.update_one({'location': (bRx,bRy)},{ '$set': {'state': 1.0}})
+            gridCollection.update_one({'Location': (bRx,bRy)},{ '$set': {'State': 1.0}})
             
 
 

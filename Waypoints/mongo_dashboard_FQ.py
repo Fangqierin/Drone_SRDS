@@ -102,7 +102,8 @@ def create_Grids(gridSize, client, dimensions):
             l += 1
         gridCollection.insert_one({
             'Grid ID': i, #f"{(int((gridSize*w-cx)/gridSize), int((cy-gridSize*l)/gridSize))}",
-            'Location': f"{(gridSize*w-cx, cy-gridSize*l)}",
+            #'Location': f"{(gridSize*w-cx, cy-gridSize*l)}",
+            'Location': (gridSize*w-cx, cy-gridSize*l),
             'State': 0.0,
             'Time': -1,
             'Cords': (int((gridSize*w-cx)/gridSize)+3, int((cy-gridSize*l)/gridSize)+3)
@@ -199,13 +200,13 @@ if __name__ == "__main__":
     
     EFACollection.delete_many({})
 
-    waypointsCollection.insert_many([{"Round": "0","x": "0", "y": "-25", "z": "110" },
-                                    {"Round": "0", "x": "50", "y": "-25", "z": "110" },
-                                    {"Round": "0", "x": "50", "y": "25", "z": "110" },
-                                    {"Round": "0", "x": "0", "y": "25", "z": "110", },
-                                    {"Round": "0", "x": "-50", "y": "25", "z": "110"},
-                                    {"Round": "0", "x": "-50", "y": "75", "z": "110"},
-                                    {"Round": "0", "x": "0", "y": "75", "z": "110"},
+    waypointsCollection.insert_many([{"Round": 0,"x": "0", "y": "-25", "z": "110" },
+                                    {"Round": 0, "x": "50", "y": "-25", "z": "110" },
+                                    {"Round": 0, "x": "50", "y": "25", "z": "110" },
+                                    {"Round": 0, "x": "0", "y": "25", "z": "110", },
+                                    {"Round": 0, "x": "-50", "y": "25", "z": "110"},
+                                    {"Round": 0, "x": "-50", "y": "75", "z": "110"},
+                                    {"Round": 0, "x": "0", "y": "75", "z": "110"},
                                     {"Round": "0", "x": "50", "y": "75", "z": "110"},])
 
     create_Grids(GRID_SIZE, client, GRID_DIMENSIONS)
