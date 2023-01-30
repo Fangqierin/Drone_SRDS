@@ -59,6 +59,7 @@ def getKeyboardInput():
     d=0
     up=0
 
+
     if kp.getKey("LEFT"): 
         lr = -speed
         d=dInterval
@@ -100,8 +101,10 @@ def getKeyboardInput():
         loc=f"({(points[-1][0]-500)/100}m,{-1*(points[-1][1]-500)/100}m)"
         dt=f"{dt}"
         print(dt)
+        
         cv2.imwrite(f'Resources/images/{dt};({(points[-1][0]-500)/100},{-1*(points[-1][1]-500)/100}, {z/100})m.png',img2)
         upload(dt, loc, img2)
+
         time.sleep(0.02)
         
     sleep(interval)
@@ -135,9 +138,13 @@ if __name__== '__main__':
     me=tello.Tello()
     kp.init()
     me.connect()
+    
     me.streamon()
+
+
     
     print(me.get_battery())
+
     #print(me.EVENT_FLIGHT_DATA)
     #main()
     while True:
@@ -153,7 +160,13 @@ if __name__== '__main__':
         cv2.imshow("Map", img)
         cv2.imshow("Image", img2)
         cv2.waitKey(1)
-       
+    
+
+
+
+
+
+
     
     
     

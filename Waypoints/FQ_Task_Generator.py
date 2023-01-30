@@ -2,7 +2,7 @@ from random import choice
 import threading 
 import zmq 
 import time
-from pyknow import *
+from experta import *
 from collections import defaultdict
 import numpy as np
 class DetectFire(Fact):

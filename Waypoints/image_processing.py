@@ -26,7 +26,7 @@ def crop(path: str, height_start: int, height_end: int, width_start: int, width_
     cv2.imwrite(path,cv2.imread(path)[height_start:height_end, width_start: width_end])
 
 
-def detect_fire(path: str, output: str) -> list:
+def detect_fire(image, output: str) -> list:
     '''
     Given the path to an image this function
     will process said image for any fires
@@ -34,7 +34,6 @@ def detect_fire(path: str, output: str) -> list:
     Returns a list of the locations of the fires
     in the photo
     '''
-    image = cv2.imread(path)
 
     # Seperates the fire areas from everything else
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
