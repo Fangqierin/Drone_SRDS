@@ -18,7 +18,7 @@ from lib_partition import Write_M_WP,Get_VG_D_M
 from Auction2020 import Auction,Partitioner,Groups,Partitioner
 from collections import defaultdict
 from fire_sim import Sim_fire
-from Get_SMT import Greedy_SMT
+#from Get_SMT import Greedy_SMT
 import sys
 #import pickle 
 import copy 
@@ -114,11 +114,8 @@ global task_dic
 
 ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
            '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
-
 # ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.7,'dh':0.7,'dw':0,'dw2':0,'dw3':0,'mf':0.6,'mh':0,'ms':0.9,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7},
 #            '5':{'df':0.94,'df2':0.94,'df3':0.94,'ds':1,'dh':0.98,'dh2':0.98,'dw':1,'dw2':1,'dw3':1,'mf':0.89,'mh':0.8,'ms':1,'mw':0.73},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':1,'mw':0.78}} 
-
-
 
 #####get the correlations among windows in one layer. 
 win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
@@ -127,9 +124,6 @@ all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
 lay_num=len(win_layer)
 all_num=len(all_wins)
 ############################## for simulation. 
-
-
-
 # # max_v=len(win_layer)-1 
 # # for i in range(len(win_layer)):    # get the 
 # #     for j in range(i, len(win_layer)):
@@ -1352,7 +1346,6 @@ while ii<25:
                     outlog.write(f" \n")
                    # outlog.write(f"1 {i} {j} {miss}\n")
                     #print(f"{drone.id} {i} {j} {miss}\n")
-                    
                     #outlog.write(f"{drone.id} {i} {j} {re} {min_re[0]} {min_re[1]} {high_sum} {high_size} {miss} {min_high} {sum_w_v} {w_min_v} {tt} {ii}\n")
                     #print(f" see the result {drone.id} {i} {j} {re} {min_re[0]} {min_re[1]} {high_sum} {high_size} {miss} {min_high} {sum_w_v} {w_min_v} {tt} {ii}")
     

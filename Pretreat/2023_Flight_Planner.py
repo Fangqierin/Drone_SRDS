@@ -11,7 +11,7 @@ import math
 import random
 import time
 import copy
-from numpy import cross, eye, dot
+# from numpy import cross, eye, dot
 from Wp_sel import M_a, Wap, get_wp, Get_D, Get_WapCa,Get_ty_WapCa, GetFov, M,Get_VG_D,rot,rot_back,Figure,Write_WP, Read_D
 from Heuristic_drone_update import Dynamic_Sample, Dynamic_Acc, Greedy_WPS,Tabu,Get_TL,Greedy_Min,Tabu_min,Calculate_Acc, Greedy_TSP, Update_M_TL
 from lib_partition import Write_M_WP,Get_VG_D_M
@@ -23,7 +23,7 @@ import sys
 import time
 #import pickle 
 import copy 
-import paho.mqtt.client as mqtt
+# import paho.mqtt.client as mqtt
 impprove_flag=True
 try:
   #  T_f=int(sys.argv[1]);  # flight time 
@@ -56,14 +56,15 @@ if policy==0 or policy==2:
 if policy==1 or policy==3:
     threshold=0.1
 
+global R_v # drone rate  
+global To# loiter time 
+
 Outputfile=f"result/result_2021/{file_name}__{improve_time}_{Drone_Num}_{va}_{policy}_{par}.txt"
 Drone_N=3
 D=[5,15]    
 Record_flag=True
 faces=7
-global R_v # drone rate  
 R_v=3
-global To# loiter time 
 To=5
 st_nor=np.array([0,-1,0])
 drone=pd.read_csv('../data/drone_char.csv',sep=' ')
@@ -112,14 +113,8 @@ global task_dic
           # '10.5':{'df':1,'dh':1,'dw':1,'mf':1,'mh':1},'0':{'df':0,'dh':0,'dw':0,'mf':0,'mh':0},'0':{'df':0,'dh':0,'dw':0,'mf':0,'mh':0}} 
 # ins_m_dic={'15':{'df':0.8,'ds':0.7,'dh':0.6,'dw':0.5,'mf':0.3,'mh':0.3,'ms':0.3},'10':{'df':0.9,'ds':1,'dh':1,'dw':1,'mf':0.7,'mh':0.5,'ms':0.7},
 #            '5':{'df':1,'ds':1,'dh':1,'dw':1,'mf':1,'mh':1,'ms':1},'0':{'df':0,'dh':0,'ds':0,'dw':0,'mf':0,'mh':0,'ms':1}} 
-
 ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
            '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
-
-# ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.7,'dh':0.7,'dw':0,'dw2':0,'dw3':0,'mf':0.6,'mh':0,'ms':0.9,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7},
-#            '5':{'df':0.94,'df2':0.94,'df3':0.94,'ds':1,'dh':0.98,'dh2':0.98,'dw':1,'dw2':1,'dw3':1,'mf':0.89,'mh':0.8,'ms':1,'mw':0.73},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':1,'mw':0.78}} 
-
-
 
 #####get the correlations among windows in one layer. 
 win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
@@ -128,9 +123,6 @@ all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
 lay_num=len(win_layer)
 all_num=len(all_wins)
 ############################## for simulation. 
-
-
-
 # # max_v=len(win_layer)-1 
 # # for i in range(len(win_layer)):    # get the 
 # #     for j in range(i, len(win_layer)):
@@ -150,12 +142,7 @@ all_num=len(all_wins)
 #           'mf':[5,0.5],'mh1':[4,0.5],'mh2':[4,0.3]}
 #task_dic={'df':[1,0.002],'ds':[1,0.002],'dh':[1,0.002],'dw':[1,0.0005],'mf':[1,0.006],'ms':[1,0.006],'mh':[1,0.006]}
 #task_dic={'df':[3,0],'ds':[1,0],'dh':[2,0],'dw':[1,0],'mf':[5,0],'ms':[5,0],'mh':[4,0]}
-task_dic={'df':[1,0.002],'df3':[2,0.002],'ds':[1,0.001],'dh':[1,0.002],'dw':[1.5,0.002],'mf':[3,0.007],'mh1':[1.5,0.007],'mh':[3,0.007],'dw2':[3,0.007],'dw3':[1,0.008],'df2':[4,0.007],'dh2':[3,0.006],'mw':[3,0.005]}
 
-#task_dic={'df':[2,0],'ds':[1,0],'dh':[1,0],'dw':[1,0],'mf':[3,0],'mh':[3,0],'mw':[3,0]}
-
-State=-1*(np.ones(4)) # 1) fire 2) smoke 3) human 4) open window 
-report=[]   # is locations of risky area. 
 class Controller: 
     def __init__(self,all_num,lay_num,Wap_ty_set=[],report=[],task_dic={},ins_m_dic={},Dis=[],f_num=2,f_up=1,p_floor=3,w_num=32,To=To,T=0,T_total=0,Drone_num=2,Dic_M_W=dic_M_W,fire_floors=[],hum_floors=[],win_floors=[]):
 
@@ -166,8 +153,6 @@ class Controller:
         self.fire_floors=fire_floors
         self.hum_floors=hum_floors
         self.begin_monitor=0
-    
-        
         Table['fire']=set()
         Table['smoke']=set()
         Table['human']=set()
@@ -398,11 +383,10 @@ class Controller:
             self.partition=Partitioner(groups,M_dis,M_fre,len(Center),dic_M_W,To,improve_time,80,0)
             if par!=2:
                 groups=self.partition.do_improve()
-            #self.draw(best_group.M_set_split, best_group.Center,[self.report,list(self.Task['mh'])],f"../drone_matlab/partition_output_{self.Drone_num}_{self.T}.txt")
+            # self.draw(best_group.M_set_split, best_group.Center,[self.report,list(self.Task['mh'])],f"../drone_matlab/partition_output_{self.Drone_num}_{self.T}.txt")
             self.M_set_split=groups.M_set_split
             self.group=groups
-               
-        
+
     def Update_Ma(self,at_t,la_w,enter_monitor):
         tmp=[list(list(self.Task.values())[k])for k in range(len(self.Task.values()))]
         old_IM=self.IM_set
@@ -878,7 +862,6 @@ class Drone:     # WPC   # All Monitoring areas with tasks
         self.Get_WPC()    
         if kind==-1:
             #print(f" why", self.Cu_Wap_ty)
-            
             Wap_set=list(itertools.chain(*self.Cu_Wap_ty))
         else: 
             Wap_set=list(self.Cu_Wap_ty[kind])
@@ -1240,6 +1223,113 @@ def on_connect(client, userdata, flags, rc):
 # 
 # client_MQTT.connect("140.114.89.210", 1883)
 # client_MQTT.loop_forever()
+task_dic={'df':[1,0.002],'df3':[2,0.002],'ds':[1,0.001],'dh':[1,0.002],'dw':[1.5,0.002],'mf':[3,0.007],'mh1':[1.5,0.007],'mh':[3,0.007],'dw2':[3,0.007],'dw3':[1,0.008],'df2':[4,0.007],'dh2':[3,0.006],'mw':[3,0.005]}
+
+#task_dic={'df':[2,0],'ds':[1,0],'dh':[1,0],'dw':[1,0],'mf':[3,0],'mh':[3,0],'mw':[3,0]}
+
+State=-1*(np.ones(4)) # 1) fire 2) smoke 3) human 4) open window 
+report=[]   # is locations of risky area. 
+try:
+  #  T_f=int(sys.argv[1]);  # flight time 
+    Drone_Num=int(sys.argv[1]);
+    file_name=str(sys.argv[2]);
+    va=int(sys.argv[3]) # random seed 
+#     ii=int(sys.argv[4])
+#     ii_end=int(sys.argv[5])
+    policy=int((sys.argv[4]))
+    par=int(sys.argv[5])
+    improve_time=int(sys.argv[6])
+except: 
+  #  T_f=600
+    Drone_Num=3
+    file_name='see'
+    va=1
+    policy=2
+    par=0
+    improve_time=0
+# policy= 0: detection threshold ==0.6
+# policy =1: detection threshold =1 
+# policy =2: give the df2 at the beginning, and detection threshold== 0.6
+time_slot=1
+plan_duration=300 
+simulation_time=1800
+T_t=np.arange(60,simulation_time,120)
+replan_period=300
+if policy==0 or policy==2:
+    threshold=0.5
+if policy==1 or policy==3:
+    threshold=0.1
+
+Outputfile=f"result/result_2021/{file_name}__{improve_time}_{Drone_Num}_{va}_{policy}_{par}.txt"
+Drone_N=3
+D=[5,15]    
+Record_flag=True
+faces=7
+# global R_v # drone rate  
+# R_v=3
+# global To # loiter time 
+To=5
+st_nor=np.array([0,-1,0])
+drone=pd.read_csv('../data/drone_char.csv',sep=' ')
+building=pd.read_csv('../data/dbh_stu.csv',delimiter=' ')
+Cov_file='../data2/wp_cover_'
+d_file='../data/Travel_Distance.csv'
+m_d_file='../data/M_Distance.csv'
+win_fname='../data/win_ro_f_'
+#print("get wp")
+Wap_set,Wap_ty=Write_WP(Drone_N,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
+wps=[Wap_set[i].loc for i in range(len(Wap_set))]
+#print([Wap_set[i].cover for i in range(len(Wap_set))])
+#Figure(building, wps)
+ty_set=[Wap_set[i].ty for i in range(len(Wap_set))]
+# Wap_ty_set=[[]for i in range(len(D))]
+# n=0
+# for i in np.sort(list(set(ty_set))):
+ #         if j.ty==i:
+#             Wap_ty_set[n].append(j)
+#     n=n+1     ############## Got a set of different type of waps. 
+## for partition ####################################3
+W_M_set,Id_M_set=Write_M_WP(Drone_N,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
+dic_M_W=dict(zip(Id_M_set,W_M_set))
+#D=Get_VG_D_M(dic_M_W,building,R_v,1,m_d_file)  
+M_dis=Read_D(m_d_file,R_v=1,To=0,T_iter=0)
+#print(M_dis,max(max(M_dis[i][:]) for i in range(len(M_dis)) ))
+high_task=['mf','mh','dw2','df2','dh2','mw']
+
+
+co=[Wap_set[i].cover for i in range(len(Wap_set))]
+#print([Wap_ty[1][i].ty for i in range(len(Wap_ty[1]))])
+in_loc=[0,-20,0]
+#D=Get_VG_D(wps,building,R_v,1,d_file,in_loc)
+T_iter=3 # the interval time of to sequential shots
+Dis=Read_D(d_file,R_v,To,T_iter)
+#print(Dis)
+########################################. Event Generation 
+# task_dic={'df1':[3,0.3],'dh1':[3,0.1],'dw1':[3,0.1],'dw2':[2,0.01],'df2':[3,0.01],'dh2':[2,0.1],
+#           'mf':[5,0.5],'mh1':[4,0.5],'mh2':[4,0.3]}
+# task_dic={'df':[3,0.005],'ds':[3,0.3],'dh':[3,0.1],'dw':[3,0.1],'dw2':[2,0.01],'df2':[3,0.01],'dh2':[2,0.1],
+#           'mf':[5,0.5],'ms':[5,0.5],'mh':[4,0.5],'mh2':[4,0.3]}
+# ins_m_dic={'30':{'df':0.8,'dh':0.6,'dw':0.5,'mf':0.3,'mh':0.3},'15':{'df':1,'dh':1,'dw':1,'mf':0.7,'mh':0.5},
+#            '10':{'df':1,'dh':1,'dw':1,'mf':1,'mh':1},'0':{'df':0,'dh':0,'dw':0,'mf':0,'mh':0}}  
+# ins_m_dic={'30':{'df':0.8,'dh':0.6,'dw':0.5,'mf':0.3,'mh':0.3},'15':{'df':1,'dh':1,'dw':1,'mf':0.7,'mh':0.5},
+          # '10.5':{'df':1,'dh':1,'dw':1,'mf':1,'mh':1},'0':{'df':0,'dh':0,'dw':0,'mf':0,'mh':0},'0':{'df':0,'dh':0,'dw':0,'mf':0,'mh':0}} 
+# ins_m_dic={'15':{'df':0.8,'ds':0.7,'dh':0.6,'dw':0.5,'mf':0.3,'mh':0.3,'ms':0.3},'10':{'df':0.9,'ds':1,'dh':1,'dw':1,'mf':0.7,'mh':0.5,'ms':0.7},
+#            '5':{'df':1,'ds':1,'dh':1,'dw':1,'mf':1,'mh':1,'ms':1},'0':{'df':0,'dh':0,'ds':0,'dw':0,'mf':0,'mh':0,'ms':1}} 
+
+ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
+           '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
+
+# ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.7,'dh':0.7,'dw':0,'dw2':0,'dw3':0,'mf':0.6,'mh':0,'ms':0.9,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7},
+#            '5':{'df':0.94,'df2':0.94,'df3':0.94,'ds':1,'dh':0.98,'dh2':0.98,'dw':1,'dw2':1,'dw3':1,'mf':0.89,'mh':0.8,'ms':1,'mw':0.73},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':1,'mw':0.78}} 
+
+#####get the correlations among windows in one layer. 
+win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
+all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
+# co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
+lay_num=len(win_layer)
+all_num=len(all_wins)
+############################## for simulation. 
+
 floor_num=12
 rooms_d=pd.read_csv('../data/rooms.csv',sep=',')
 room_AF=dict(zip(list(rooms_d['r']),(zip(list(rooms_d['w']),list(rooms_d['d'])))))
@@ -1259,12 +1349,10 @@ for T_total in [simulation_time]:
     for t_f in [plan_duration]: 
         c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,Drone_num=Drone_Num,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
         c_orgin.First_task()
-        #Drones,Wap_dic=c_orgin.Coordiniation(t_f,T_total)
         outlog.write(f"random:{rseed}T:{T_total}\n")
         miss=0
         t=0 
         for i in range(-1,0):
-            # for try get the same tasks! 
             for j in [10]:#range(14):  
                 done=False
                 c=copy.deepcopy(c_orgin)
@@ -1292,4 +1380,3 @@ for T_total in [simulation_time]:
             #print(f" we got enter_tinme",Enter_time)
                 #############################################################
     ii=ii+1
-    

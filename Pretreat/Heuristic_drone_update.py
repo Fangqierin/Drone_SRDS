@@ -327,8 +327,7 @@ def Greedy_Min(case,co_s,Wap_set,M_set,D,task_dic,ins_m_dic,w_in,T_in,T_tm,T_tot
                     ac_w[m.id]=list( m.ac_re )
                 min_re=min([min(a) for a in ac_w.values()])
                 count=sum([a.count(min_re) for a in ac_w.values() ]) # weighted 
-                min_set=[i for i in list(ac_w.keys()) if min_re in ac_w.get(i)]
-                
+                min_set=[i for i in list(ac_w.keys()) if min_re in ac_w.get(i)] 
 #                 min_re=min([min(list(m_set.values())[i].ac_re) for i in range(len(m_set))])
 #                 count=sum([list(m_set.values())[i].ac_re.count(min_re) for i in range(len(m_set))])
 #                 min_dict=list(zip([list(m_set.values())[i].id for i in range(len(m_set))],[list(m_set.values())[i].ac_re for i in range(len(m_set))]))
