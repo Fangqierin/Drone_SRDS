@@ -578,7 +578,6 @@ class Controller:
         return Update, Replan, Table2, enter_monitor 
  ############################################     
     def track(self,Sim,P_list,sim_logging_file,check_slot,Wap_dic,start_time):
-
         # with open(sim_logging_file, mode="a", newline="") as rewardfile:
         #     fieldnames = [
         #         "seed",
@@ -843,7 +842,6 @@ class Controller:
    
 ######################################################################################## 
 class Drone:     # WPC   # All Monitoring areas with tasks
-
     def __init__(self,id,Wap_ty_set,Ma_set,Dis,task_dic,ins_m_dic,cu_wp,cu_time,T,T_total):
         self.id=id
         self.Wap_ty_set=Wap_ty_set
@@ -1021,191 +1019,17 @@ def Get_sim(rseed,a,output,time_slot,lay_num=12):  # here a is a window!!!!!
             Sim_real[row['t']]['h']=[]     
     return Sim,Sim_real,fire_floors, hum_floors, win_floors
 
-def check_perception(Sim,R_Table,start_sim,Total,T_time,outlog,i,method,ii,R_state,fire_floors,begin_monitor):
-    track_miss=defaultdict(list)
-    track_acm=defaultdict(list)
-    track_sim=defaultdict(list)
-    tt=start_sim
-    times=sorted(list(R_Table.keys()))
-    targets=['fire','human','window']
-    tag=['f','h','w']
-    T_t=[ int(i)+start_sim for i in list(np.array(T_time)/60)]
-    #print(f" see it is not equal", T_t)
-    miss=0
-    miss_list=[]
-    miss_tar=[0]*len(targets)
-    for i in range(len(times)-1):
-        tt=times[i]
-        while tt >=times[i] and tt<times[i+1]:
-            for ta in range(len(targets)):
-                sim= Sim[tt].get(tag[ta])
-                see=R_Table[times[i]].get(targets[ta])
-                track_sim[targets[ta]].append(len(sim))
-                if ta==2:  # it is window 
-                    miss=miss+len(set(sim)-set(see))
-                    miss_tar[ta]=miss_tar[ta]+len(set(sim)-set(see))  # because broken window never close again!
-                    track_miss[targets[ta]].append(len(set(sim)-set(see)))
-                    track_acm[targets[ta]].append(miss_tar[ta])
-                    #print(f" miss {tag[ta]} {tt}: {len(set(sim)-set(see))}")
-                else:
-                    miss=miss+len(set(sim)-set(see))+len(set(see)-set(sim))
-                    miss_tar[ta]=miss_tar[ta]+len(set(sim)-set(see))+len(set(see)-set(sim))
-                    track_miss[targets[ta]].append(len(set(sim)-set(see))+len(set(see)-set(sim)))
-                    track_acm[targets[ta]].append(miss_tar[ta])
-            if tt in T_t:
-                miss_list.append(miss)
-                #print (tt,T_t,miss_list)
-            tt=tt+1
-    while tt >=times[-1] and tt<=start_sim+Total/60:
-        for ta in range(len(targets)):
-            sim= Sim[tt].get(tag[ta])
-            see=R_Table[times[-1]].get(targets[ta])
-            try:
-                track_sim[targets[ta]].append(len(sim))
-            except:
-                track_sim[targets[ta]].append(0)
-            if ta==2:
-                miss=miss+len(set(sim)-set(see))
-                miss_tar[ta]=miss_tar[ta]+len(set(sim)-set(see))
-                track_miss[targets[ta]].append(len(set(sim)-set(see)))
-                track_acm[targets[ta]].append(miss_tar[ta])
-            else:
-                miss=miss+len(set(sim)-set(see))+len(set(see)-set(sim))
-                miss_tar[ta]=miss_tar[ta]+len(set(sim)-set(see))+len(set(see)-set(sim))
-                track_miss[targets[ta]].append(len(set(sim)-set(see))+len(set(see)-set(sim)))
-                track_acm[targets[ta]].append(miss_tar[ta])
-                #print(f" miss {tag[ta]} {tt}: {len(set(sim)-set(see))+len(set(see)-set(sim))}")
-            #print(f" miss what {set(sim)-set(see)} {set(see)-set(sim)}")
-        if tt in T_t:
-            miss_list.append(miss)
-            #print(tt,T_t,miss_list )
-        tt=tt+1
-    ################################## for tracking fire and human state. 
-    Perception_state={}  # track the perception
-    Com_state={}
-    last_s={}
-    last_s['f_s']={}
-    last_s['h_s']={}
-    last_s['h_s2']={}
-    #print(f"why R_state {R_state}")
-    for t,state in R_state.items():
-        Perception_state[t]={}
-        Com_state[t]={}
-        for s, j in state.items(): # for f_s and h_s
-            tmp=[];tmp2=[]
-            com_tmp=[];com_tmp2=[]
-            state=dict(zip(Sim[t].get(s[0]),Sim[t].get(s)))
-            for i in Sim[t].get(s[0]):
-                if s[0]=='h' and i//lay_num not in fire_floors: #### only monitoring status in fire floor. 
-                    #print(t,f"not in fire_floors", i, i//lay_num, fire_floors)
-                    if last_s[s].get(i)==None:
-                        last_s[s][i]=-1
-                    if i in j:
-                        tmp2.append(state.get(i))
-                        last_s[s][i]=state.get(i)
-                    else:
-                        tmp2.append(last_s[s].get(i))
-                    com_tmp2.append(state.get(i))
-                else:
-                    #print(t,f" it is in",s[0],i,i//lay_num,fire_floors)
-                    if last_s[s].get(i)==None:
-                        last_s[s][i]=-1
-                    if i in j:
-                        tmp.append(state.get(i))
-                        last_s[s][i]=state.get(i)
-                    else:
-                        tmp.append(last_s[s].get(i))
-                    com_tmp.append(state.get(i))
-#             if s[0]=='h':
-#                 print( Sim[t].get(s[0]))
-#                 print(f"see not in risky area human",s, tmp2, com_tmp2,tmp,com_tmp)
-            if s[0]=='h':
-                Perception_state[t]['h_s2']=tmp2
-                Com_state[t]['h_s2']=com_tmp2
-            Perception_state[t][s]=tmp
-            Com_state[t][s]=com_tmp
-    #print(f"see to see \n { Perception_state} \n {Com_state}")
-    miss_state=[]; miss_h2=[]
-    miss=0;miss2=0
-    for t, state in Com_state.items():
-        for s, j in state.items():
-            sim_s=Perception_state.get(t).get(s)
-            try:
-                ms=len([k for k in range(len(j)) if j[k]!= sim_s[k]])
-            except:
-                ms=0
-            track_miss[s].append(ms)
-            if s!='h_s2':
-                miss=miss+ms
-            else:
-                miss2=miss2+ms
-        if t in T_t:
-            miss_state.append(miss)
-            miss_h2.append(miss2)
-    j=method
-    for i in range(len(T_time)):
-        try:
-            outlog.write(f"sum {i} {j} {ii} {T_time[i]} {miss_list[i]} \n")
-        except:
-            outlog.write(f"sum {i} {j} {ii} {T_time[i]} 100000000 \n")
-    for i in range(len(T_time)):
-#         print(f"{T_time[i]} {miss_list}")
-#         print(f"{T_time[i]} {miss_state}")
-        if T_time[i] >=begin_monitor:
-            try:
-                outlog.write(f"sum_state {i} {j} {ii} {T_time[i]} {miss_list[i]+miss_state[i]+miss_h2[i]/2} \n")
-            except:
-                outlog.write(f"sum_state {i} {j} {ii} {T_time[i]} 100000000 \n")
-        else:
-            try:
-                outlog.write(f"sum_state {i} {j} {ii} {T_time[i]} {miss_list[i]} \n")
-            except:
-                outlog.write(f"sum_state {i} {j} {ii} {T_time[i]} 100000000 \n")
-    for i in range(len(T_time)):
-        try:
-            outlog.write(f"sum_h2 {i} {j} {ii} {T_time[i]} {miss_h2[i]} \n")
-        except:
-            outlog.write(f"sum_h2 {i} {j} {ii} {T_time[i]} 100000000 \n")
-    for i in list(track_miss.keys()):
-        outlog.write(f"miss {i} {j} {ii}")
-        for val in track_miss[i]:
-            outlog.write(f" {val}")
-        outlog.write(f" \n")
-    for i in list(track_acm.keys()):
-        outlog.write(f"acm {i} {j} {ii}")
-        for val in track_acm[i]:
-            outlog.write(f" {val}")
-        outlog.write(f" \n")
-    for i in list(track_sim.keys()):
-        outlog.write(f"tsim {i} {j} {ii}")
-        for val in track_sim[i]:
-            outlog.write(f" {val}")
-        outlog.write(f" \n")
-    return miss_list, miss_state,miss_h2
-
 def on_connect(client, userdata, flags, rc):
     print("Connected with task "+str(rc))
     client.subscribe([("Task_add", 0),("Task_del", 0)])
 
-
-def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To): 
+def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To,sim_seed): 
         
         D=[5] # 2024 change it only 5 meters    
-        policy=2
-        # policy= 0: detection threshold ==0.6
-        # policy =1: detection threshold =1 
-        # policy =2: give the df2 at the beginning, and detection threshold== 0.6
-        time_slot=1
-        T_t=np.arange(60,simulation_time,120)
-        replan_period=300
-        if policy==0 or policy==2:
-            threshold=0.5
-        if policy==1 or policy==3:
-            threshold=0.1
         # Outputfile=f"result/result_2021/{file_name}__{improve_time}_{Drone_Num}_{va}_{policy}_{par}.txt"
         ######## Drone Number, monitoring distance 
         # D=[5,15]
-        Record_flag=True
+        # Record_flag=True
         faces=7 
         # global R_v # drone speed   
         # global To # loiter time 
@@ -1235,23 +1059,10 @@ def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To):
         ########################################. Event Generation 
         ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
                 '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
-        #####get the correlations among windows in one layer. 
-        win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
-        all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
-        # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
-        lay_num=len(win_layer)
-        all_num=len(all_wins)
-        ############################## for fire simulation. 
-        floor_num=12
-        rooms_d=pd.read_csv('../data/rooms.csv',sep=',')
-        room_AF=dict(zip(list(rooms_d['r']),(zip(list(rooms_d['w']),list(rooms_d['d'])))))
-        all_room=len(room_AF)*floor_num
-        ############################################# 
-        ii=0 # Seed value for fire simulation 
         start_sim=5
         Enter_time=0
-        rseed=ii
-        random.seed(ii)
+        rseed=sim_seed
+        random.seed(sim_seed)
         va=3   ### Number of fire sources 
         a=random.sample(range(all_room),va)
         output=f"./result/sim/sim_{a}_{file_name}_{Drone_Num}_{va}_{policy}.csv"
@@ -1322,14 +1133,38 @@ if __name__ == "__main__":
         Drone_Num=10
         file_name='see'
         va=1
-        # par=0
-        # improve_time=0
+    par=0
+    improve_time=0
     task_dic={'df':[1,0.002],'df3':[2,0.002],'ds':[1,0.001],'dh':[1,0.002],'dw':[1.5,0.002],'mf':[3,0.007],'mh1':[1.5,0.007],'mh':[3,0.007],'dw2':[3,0.007],'dw3':[1,0.008],'df2':[4,0.007],'dh2':[3,0.006],'mw':[3,0.005]}
     Drone_Num=3
     plan_duration=300 
     simulation_time=3600
     R_v=3 # Drone flying speed 
     To=5 # Drone loitor time 
-
-    run_sim(Drone_Num, plan_duration, simulation_time, R_v, To)
+    Record_flag=False
+    policy=2
+    # policy= 0: detection threshold ==0.6
+    # policy =1: detection threshold =1 
+    # policy =2: give the df2 at the beginning, and detection threshold== 0.6
+    time_slot=1
+    T_t=np.arange(60,simulation_time,120)
+    replan_period=300
+    if policy==0 or policy==2:
+        threshold=0.5
+    if policy==1 or policy==3:
+        threshold=0.1
+    #####get the correlations among windows in one layer. 
+    win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
+    all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
+    # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
+    lay_num=len(win_layer)
+    all_num=len(all_wins)
+    ############################## for fire simulation. 
+    floor_num=12
+    rooms_d=pd.read_csv('../data/rooms.csv',sep=',')
+    room_AF=dict(zip(list(rooms_d['r']),(zip(list(rooms_d['w']),list(rooms_d['d'])))))
+    all_room=len(room_AF)*floor_num
+    ############################################# 
+    
+    run_sim(Drone_Num, plan_duration, simulation_time, R_v, To,sim_seed=0)
     
