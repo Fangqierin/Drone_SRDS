@@ -583,7 +583,7 @@ class Controller:
                 #print(f" enter monitoring phase {tt}")
         return Update, Replan, Table2, enter_monitor 
  ############################################     
-    def track(self,Sim,P_list,slot,logfile,check_slot,Wap_dic,start_time):
+    def track(self,Sim,P_list,logfile,check_slot,Wap_dic,start_time):
         dis_fire=[]
         dis_hum=[]
         def check_update():
@@ -1347,7 +1347,7 @@ Sim,Sim_real,fire_floors,hum_floors,win_floors=Get_sim(rseed,a,output,time_slot)
 fire_source=Sim.get(start_sim).get('f')
 for T_total in [simulation_time]:
     for t_f in [plan_duration]: 
-        c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,Drone_num=Drone_Num,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
+        c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,To=To,Drone_num=Drone_Num,Dic_M_W=dic_M_W,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
         c_orgin.First_task()
         outlog.write(f"random:{rseed}T:{T_total}\n")
         miss=0
@@ -1369,13 +1369,12 @@ for T_total in [simulation_time]:
                         P_list.append(P)
                     print(f"-------Drone Flight Planning------{P_list}--")
                     time_slot=1
-                    update,Replan,Table,cu_time,ww,enter_monitor,done=c.track(Sim_real,P_list,time_slot,'',1,Wap_dic,start_sim) # here check_slot=1 s
+                    update,Replan,Table,cu_time,ww,enter_monitor,done=c.track(Sim_real,P_list,'',time_slot,Wap_dic,start_sim) # here check_slot=1 s
                     Task=c.Update_Task(update,Replan,P_list,ww,cu_time,Table,Wap_dic,enter_monitor)  # update task.update Ma, cu_time. 
                     print(f"------Update Task at {cu_time} min---- {Task}-----")
                     c.cu_time=cu_time*60 
                     Drones,Wap_dic=c.Coordiniation(t_f,T_total,[i[1] for i in ww])
                     #all_time.append(time.time()-t_l)
-                    #print(f"what Table recored {c.Table}")
                 #miss,miss_state,miss_h2=check_perception(Sim,c.Record_table,start_sim,c.T_total,T_t,outlog,i,j,ii,c.Record_state,c.fire_floors) # fire floors for tracking human state. 
             #print(f" we got enter_tinme",Enter_time)
                 #############################################################

@@ -8,7 +8,7 @@
             "name": "test",
             "type": "debugpy",
             "request": "launch",
-            "program": "2023_Flight_Planner.py", 
+            "program": "2024_Flight_Planner.py", 
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "/Users/fangqiliu/eclipse-workspace_2020/Drone_SRDS/Pretreat",

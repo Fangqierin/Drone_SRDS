@@ -647,21 +647,6 @@ def Read_D(d_file, R_v,To,T_iter):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ####### old 
 def Calculate_inflos_oldd(M_set,Tl,Ti,Time,task_dic,ins_m_dic,To):# here the every time, the inital value is 0. We already give inital value
     TL=copy.deepcopy(Tl)   # T is the coverge time list, there is no waypoints issue. 

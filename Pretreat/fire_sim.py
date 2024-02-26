@@ -478,7 +478,7 @@ def Sim_fire(seed,a,outputfile,slot):
         rooms[floor][room_set[id]].add_fire(if_flash=True)
     #print(f" see roome ",room_set,room_num,fire_source)
     sim=Simulator(rooms,fire_source,human_exist,opens,len(win_layer),floor_num,slot)
-    sim.simulate(0,40,outputfile,seed)
+    sim.simulate(0,120,outputfile,seed)
 
 
 def Sim_fire2(st,et,seed,a,outputfile,slot):

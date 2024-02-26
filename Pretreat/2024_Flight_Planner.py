@@ -932,7 +932,7 @@ class Drone:     # WPC   # All Monitoring areas with tasks
         return P
         #return re,min_re,event_size,P
         
-def Get_sim(rseed,a,output,time_slot):  # here a is a window!!!!! 
+def Get_sim(rseed,a,output,time_slot,lay_num=12):  # here a is a window!!!!! 
     Sim_fire(rseed,a,output,time_slot)  # write the simulation in a file.
     Timeline=pd.read_csv(output,sep='/ ',engine='python')
     Sim=defaultdict(dict)
@@ -1187,18 +1187,133 @@ def on_connect(client, userdata, flags, rc):
     print("Connected with task "+str(rc))
     client.subscribe([("Task_add", 0),("Task_del", 0)])
 
+
+def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To): 
+        
+        D=[5] # 2024 change it only 5 meters    
+        policy=2
+        # policy= 0: detection threshold ==0.6
+        # policy =1: detection threshold =1 
+        # policy =2: give the df2 at the beginning, and detection threshold== 0.6
+        time_slot=1
+        T_t=np.arange(60,simulation_time,120)
+        replan_period=300
+        if policy==0 or policy==2:
+            threshold=0.5
+        if policy==1 or policy==3:
+            threshold=0.1
+        # Outputfile=f"result/result_2021/{file_name}__{improve_time}_{Drone_Num}_{va}_{policy}_{par}.txt"
+        ######## Drone Number, monitoring distance 
+        # D=[5,15]
+        Record_flag=True
+        faces=7 
+        # global R_v # drone speed   
+        # global To # loiter time 
+        st_nor=np.array([0,-1,0])
+        drone=pd.read_csv('../data/drone_char.csv',sep=' ')  # Drone sensor configuration
+        ######## Loading waypoint information 
+        building=pd.read_csv('../data/dbh_stu.csv',delimiter=' ')
+        Cov_file='../data2/wp_cover_'
+        d_file='../data/Travel_Distance.csv'
+        m_d_file='../data/M_Distance.csv'
+        win_fname='../data/win_ro_f_'
+        #### 2024 Generating waypoints for drones 
+        Wap_set,Wap_ty=Write_WP(Drone_Num,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
+        wps=[Wap_set[i].loc for i in range(len(Wap_set))]
+        #Figure(building, wps)
+        ty_set=[Wap_set[i].ty for i in range(len(Wap_set))]
+        ## for partition ###############
+        W_M_set,Id_M_set=Write_M_WP(Drone_Num,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
+        dic_M_W=dict(zip(Id_M_set,W_M_set))
+        M_dis=Read_D(m_d_file,R_v=1,To=0,T_iter=0)
+        high_task=['mf','mh','dw2','df2','dh2','mw']
+        co=[Wap_set[i].cover for i in range(len(Wap_set))]
+        in_loc=[0,-20,0]  ###Initial loaction of drones 
+        #D=Get_VG_D(wps,building,R_v,1,d_file,in_loc)
+        T_iter=3 # the interval time of to sequential shots
+        Dis=Read_D(d_file,R_v,To,T_iter)
+        ########################################. Event Generation 
+        ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
+                '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
+        #####get the correlations among windows in one layer. 
+        win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
+        all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
+        # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
+        lay_num=len(win_layer)
+        all_num=len(all_wins)
+        ############################## for fire simulation. 
+        floor_num=12
+        rooms_d=pd.read_csv('../data/rooms.csv',sep=',')
+        room_AF=dict(zip(list(rooms_d['r']),(zip(list(rooms_d['w']),list(rooms_d['d'])))))
+        all_room=len(room_AF)*floor_num
+        ############################################# 
+        ii=0 # Seed value for fire simulation 
+        start_sim=5
+        Enter_time=0
+        rseed=ii
+        random.seed(ii)
+        va=3   ### Number of fire sources 
+        a=random.sample(range(all_room),va)
+        output=f"./result/sim/sim_{a}_{file_name}_{Drone_Num}_{va}_{policy}.csv"
+        Sim,Sim_real,fire_floors,hum_floors,win_floors=Get_sim(rseed,a,output,time_slot,lay_num)
+        fire_source=Sim.get(start_sim).get('f')
+        ##############################################
+        sim_logging_file=f"./sim_log_2024/log_seed_{ii}_droneNum_{Drone_Num}_fires_{va}_simtime_{int(simulation_time//60)}min_plan_{int(plan_duration/60)}min.csv"
+        with open(sim_logging_file, mode="w", newline="") as file:  ## Logging Actions
+            fieldnames = [
+                    "seed",
+                    "drone_id",
+                    "time",
+                    "waypoint_seq",
+                    "waypoint_id",
+                    "waypoint_location",
+                    "monitor_area",
+                    "task",
+                ]
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            file.close()
+        for T_total in [simulation_time]:
+            for t_f in [plan_duration]: 
+                #c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,Drone_num=Drone_Num,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
+                c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,To=To,Drone_num=Drone_Num,Dic_M_W=dic_M_W,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
+                c_orgin.First_task()
+                # outlog.write(f"random:{rseed}T:{T_total}\n")
+                miss=0
+                t=0 
+                for i in range(-1,0):
+                    for j in [10]:#range(14):  
+                        done=False
+                        c=copy.deepcopy(c_orgin)
+                        c.begin_monitor=0
+                        Drones,Wap_dic=c.Coordiniation(t_f,T_total)
+                        time_start=time.time()
+                        running_time=[]
+                        while done==False:
+                            P_list=[]
+                            t=time.time() 
+                            run_time=[]
+                            for drone in Drones:
+                                P=drone.Do_Heuristic(i,j)
+                                P_list.append(P)
+                            print(f"-------Drone Flight Planning------{P_list}--")
+                            time_slot=int(plan_duration/60)  ## 2024 Set checking slot to plan duration, to stop event-driven
+                            update,Replan,Table,cu_time,ww,enter_monitor,done=c.track(Sim_real,P_list,sim_logging_file,time_slot,Wap_dic,start_sim) # here check_slot=1 s
+                            Task=c.Update_Task(update,Replan,P_list,ww,cu_time,Table,Wap_dic,enter_monitor)  # update task.update Ma, cu_time. 
+                            print(f"------Update Task at {cu_time} min---- {Task}-----")
+                            c.cu_time=cu_time*60 
+                            Drones,Wap_dic=c.Coordiniation(t_f,T_total,[i[1] for i in ww])
+                        #miss,miss_state,miss_h2=check_perception(Sim,c.Record_table,start_sim,c.T_total,T_t,outlog,i,j,ii,c.Record_state,c.fire_floors) # fire floors for tracking human state. 
+                        #############################################################
+
 if __name__ == "__main__":
-    task_dic={'df':[1,0.002],'df3':[2,0.002],'ds':[1,0.001],'dh':[1,0.002],'dw':[1.5,0.002],'mf':[3,0.007],'mh1':[1.5,0.007],'mh':[3,0.007],'dw2':[3,0.007],'dw3':[1,0.008],'df2':[4,0.007],'dh2':[3,0.006],'mw':[3,0.005]}
     #task_dic={'df':[2,0],'ds':[1,0],'dh':[1,0],'dw':[1,0],'mf':[3,0],'mh':[3,0],'mw':[3,0]}
-    # State=-1*(np.ones(4)) # 1) fire 2) smoke 3) human 4) open window 
-    # report=[]   # is locations of risky area. 
     try:
     #  T_f=int(sys.argv[1]);  # flight time 
         Drone_Num=int(sys.argv[1])
         file_name=str(sys.argv[2])
         va=int(sys.argv[3]) # Number of fire sources 
-    #     ii=int(sys.argv[4])
-    #     ii_end=int(sys.argv[5])
+        # ii=int(sys.argv[4])
         # policy=int((sys.argv[4]))
         # par=int(sys.argv[5])
         # improve_time=int(sys.argv[6])
@@ -1207,127 +1322,14 @@ if __name__ == "__main__":
         Drone_Num=10
         file_name='see'
         va=1
-        par=0
-        improve_time=0
-    policy=2
-    # policy= 0: detection threshold ==0.6
-    # policy =1: detection threshold =1 
-    # policy =2: give the df2 at the beginning, and detection threshold== 0.6
-    time_slot=1
+        # par=0
+        # improve_time=0
+    task_dic={'df':[1,0.002],'df3':[2,0.002],'ds':[1,0.001],'dh':[1,0.002],'dw':[1.5,0.002],'mf':[3,0.007],'mh1':[1.5,0.007],'mh':[3,0.007],'dw2':[3,0.007],'dw3':[1,0.008],'df2':[4,0.007],'dh2':[3,0.006],'mw':[3,0.005]}
+    Drone_Num=3
     plan_duration=300 
     simulation_time=3600
-    T_t=np.arange(60,simulation_time,120)
-    replan_period=300
-    if policy==0 or policy==2:
-        threshold=0.5
-    if policy==1 or policy==3:
-        threshold=0.1
-    Outputfile=f"result/result_2021/{file_name}__{improve_time}_{Drone_Num}_{va}_{policy}_{par}.txt"
-    ######## Drone Number, monitoring distance 
-    Drone_N=3
-    D=[5,15]
-    D=[5] # 2024 change it only 5 meters    
-    Record_flag=True
-    faces=7
-    # global R_v # drone speed   
-    R_v=3
-    # global To # loiter time 
-    To=5
-    st_nor=np.array([0,-1,0])
-    drone=pd.read_csv('../data/drone_char.csv',sep=' ')  # Drone sensor configuration
-    ######## Loading waypoint information 
-    building=pd.read_csv('../data/dbh_stu.csv',delimiter=' ')
-    Cov_file='../data2/wp_cover_'
-    d_file='../data/Travel_Distance.csv'
-    m_d_file='../data/M_Distance.csv'
-    win_fname='../data/win_ro_f_'
-    #### 2024 Generating waypoints for drones 
-    Wap_set,Wap_ty=Write_WP(Drone_N,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
-    wps=[Wap_set[i].loc for i in range(len(Wap_set))]
-    #Figure(building, wps)
-    ty_set=[Wap_set[i].ty for i in range(len(Wap_set))]
-    ## for partition ###############
-    W_M_set,Id_M_set=Write_M_WP(Drone_N,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
-    dic_M_W=dict(zip(Id_M_set,W_M_set))
-    M_dis=Read_D(m_d_file,R_v=1,To=0,T_iter=0)
-    high_task=['mf','mh','dw2','df2','dh2','mw']
-    co=[Wap_set[i].cover for i in range(len(Wap_set))]
-    in_loc=[0,-20,0]  ###Initial loaction of drones 
-    #D=Get_VG_D(wps,building,R_v,1,d_file,in_loc)
-    T_iter=3 # the interval time of to sequential shots
-    Dis=Read_D(d_file,R_v,To,T_iter)
-    ########################################. Event Generation 
-    ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
-            '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
-    #####get the correlations among windows in one layer. 
-    win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
-    all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
-    # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
-    lay_num=len(win_layer)
-    all_num=len(all_wins)
-    ############################## for fire simulation. 
-    floor_num=12
-    rooms_d=pd.read_csv('../data/rooms.csv',sep=',')
-    room_AF=dict(zip(list(rooms_d['r']),(zip(list(rooms_d['w']),list(rooms_d['d'])))))
-    all_room=len(room_AF)*floor_num
-    ii=0 # Seed value for fire simulation 
-    start_sim=5
-    Enter_time=0
-    rseed=ii
-    outlog=open(Outputfile,'a+')
-    random.seed(ii)
-    va=3   ### Number of fire sources 
-    a=random.sample(range(all_room),va)
-    output=f"./result/sim/sim_{a}_{file_name}_{Drone_Num}_{va}_{policy}_{par}.csv"
-    Sim,Sim_real,fire_floors,hum_floors,win_floors=Get_sim(rseed,a,output,time_slot)
-    fire_source=Sim.get(start_sim).get('f')
-    ##############################################
-    sim_logging_file=f"./sim_log_2024/log_seed_{ii}_droneNum_{Drone_Num}_fires_{va}_simtime_{int(simulation_time//60)}min_plan_{int(plan_duration/60)}min.csv"
-    with open(sim_logging_file, mode="w", newline="") as file:  ## Logging Actions
-        fieldnames = [
-                "seed",
-                "drone_id",
-                "time",
-                "waypoint_seq",
-                "waypoint_id",
-                "waypoint_location",
-                "monitor_area",
-                "task",
-            ]
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        file.close()
-    for T_total in [simulation_time]:
-        for t_f in [plan_duration]: 
-            #c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,Drone_num=Drone_Num,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
-            c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,To=To,Drone_num=Drone_Num,Dic_M_W=dic_M_W,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)   
-            c_orgin.First_task()
-            outlog.write(f"random:{rseed}T:{T_total}\n")
-            miss=0
-            t=0 
-            for i in range(-1,0):
-                for j in [10]:#range(14):  
-                    done=False
-                    c=copy.deepcopy(c_orgin)
-                    c.begin_monitor=0
-                    Drones,Wap_dic=c.Coordiniation(t_f,T_total)
-                    time_start=time.time()
-                    running_time=[]
-                    while done==False:
-                        P_list=[]
-                        t=time.time() 
-                        run_time=[]
-                        for drone in Drones:
-                            P=drone.Do_Heuristic(i,j)
-                            P_list.append(P)
-                        print(f"-------Drone Flight Planning------{P_list}--")
-                        time_slot=int(plan_duration/60)  ## 2024 Set checking slot to plan duration, to stop event-driven
-                        update,Replan,Table,cu_time,ww,enter_monitor,done=c.track(Sim_real,P_list,sim_logging_file,time_slot,Wap_dic,start_sim) # here check_slot=1 s
-                        Task=c.Update_Task(update,Replan,P_list,ww,cu_time,Table,Wap_dic,enter_monitor)  # update task.update Ma, cu_time. 
-                        print(f"------Update Task at {cu_time} min---- {Task}-----")
-                        c.cu_time=cu_time*60 
-                        Drones,Wap_dic=c.Coordiniation(t_f,T_total,[i[1] for i in ww])
-                        #all_time.append(time.time()-t_l)
-                    #miss,miss_state,miss_h2=check_perception(Sim,c.Record_table,start_sim,c.T_total,T_t,outlog,i,j,ii,c.Record_state,c.fire_floors) # fire floors for tracking human state. 
-                    #############################################################
-        ii=ii+1
+    R_v=3 # Drone flying speed 
+    To=5 # Drone loitor time 
+
+    run_sim(Drone_Num, plan_duration, simulation_time, R_v, To)
+    
