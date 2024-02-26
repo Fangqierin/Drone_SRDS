@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "test",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "2023_Flight_Planner.py", 
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "/Users/fangqiliu/eclipse-workspace_2020/Drone_SRDS/Pretreat",
+            "python": "/Users/fangqiliu/eclipse-workspace_2020/Drone_SRDS/Pretreat/drone/bin/python" 
+        }
+    ]
