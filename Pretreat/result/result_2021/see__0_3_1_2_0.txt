@@ -1,9 +1,0 @@
-random:0T:1800
-random:0T:1800
-random:0T:1800
-random:0T:1800
-random:0T:1800
-random:0T:1800
-random:0T:1800
-random:0T:3600
-random:0T:5400
