@@ -10,11 +10,36 @@ import math
 import random
 import time
 import copy
+
 # from numpy import cross, eye, dot
-from Wp_sel import M_a, Wap, get_wp, Get_D, Get_WapCa, Get_ty_WapCa, GetFov, M, Get_VG_D, rot, rot_back, Figure, \
-    Write_WP, Read_D
-from Heuristic_drone_update import Dynamic_Sample, Dynamic_Acc, Greedy_WPS, Tabu, Get_TL, Greedy_Min, Tabu_min, \
-    Calculate_Acc, Greedy_TSP, Update_M_TL
+from Wp_sel import (
+    M_a,
+    Wap,
+    get_wp,
+    Get_D,
+    Get_WapCa,
+    Get_ty_WapCa,
+    GetFov,
+    M,
+    Get_VG_D,
+    rot,
+    rot_back,
+    Figure,
+    Write_WP,
+    Read_D,
+)
+from Heuristic_drone_update import (
+    Dynamic_Sample,
+    Dynamic_Acc,
+    Greedy_WPS,
+    Tabu,
+    Get_TL,
+    Greedy_Min,
+    Tabu_min,
+    Calculate_Acc,
+    Greedy_TSP,
+    Update_M_TL,
+)
 from lib_partition import Write_M_WP, Get_VG_D_M
 from Auction2020 import Auction, Partitioner, Groups, Partitioner
 from collections import defaultdict
@@ -22,24 +47,24 @@ from fire_sim import Sim_fire
 from Get_SMT import Greedy_SMT
 import sys
 import time
+
 # import pickle
 import copy
 import csv
 
-
 # import paho.mqtt.client as mqtt
 # impprove_flag=True
 # try:
-#   #  T_f=int(sys.argv[1]);  # flight time 
+#   #  T_f=int(sys.argv[1]);  # flight time
 #     Drone_Num=int(sys.argv[1]);
 #     file_name=str(sys.argv[2]);
-#     va=int(sys.argv[3]) # random seed 
+#     va=int(sys.argv[3]) # random seed
 # #     ii=int(sys.argv[4])
 # #     ii_end=int(sys.argv[5])
 #     policy=int((sys.argv[4]))
 #     par=int(sys.argv[5])
 #     improve_time=int(sys.argv[6])
-# except: 
+# except:
 #   #  T_f=600
 #     Drone_Num=3
 #     file_name='see'
@@ -48,10 +73,10 @@ import csv
 #     par=0
 #     improve_time=0
 # policy= 0: detection threshold ==0.6
-# policy =1: detection threshold =1 
+# policy =1: detection threshold =1
 # policy =2: give the df2 at the beginning, and detection threshold== 0.6
 # time_slot=1
-# plan_duration=300 
+# plan_duration=300
 # simulation_time=1800
 # T_t=np.arange(60,simulation_time,120)
 # replan_period=300
@@ -60,12 +85,12 @@ import csv
 # if policy==1 or policy==3:
 #     threshold=0.1
 
-# global R_v # drone rate  
-# global To# loiter time 
+# global R_v # drone rate
+# global To# loiter time
 
 # Outputfile=f"result/result_2021/{file_name}__{improve_time}_{Drone_Num}_{va}_{policy}_{par}.txt"
 # Drone_N=3
-# D=[5,15]    
+# D=[5,15]
 # Record_flag=True
 # faces=7
 # R_v=3
@@ -88,11 +113,11 @@ import csv
 # for i in np.sort(list(set(ty_set))):
 #         if j.ty==i:
 #             Wap_ty_set[n].append(j)
-#     n=n+1     ############## Got a set of different type of waps. 
+#     n=n+1     ############## Got a set of different type of waps.
 ## for partition ####################################3
 # W_M_set,Id_M_set=Write_M_WP(Drone_N,D,faces,R_v,To,st_nor,drone,building,Cov_file,d_file,win_fname)
 # dic_M_W=dict(zip(Id_M_set,W_M_set))
-# #D=Get_VG_D_M(dic_M_W,building,R_v,1,m_d_file)  
+# #D=Get_VG_D_M(dic_M_W,building,R_v,1,m_d_file)
 # M_dis=Read_D(m_d_file,R_v=1,To=0,T_iter=0)
 # print(M_dis,max(max(M_dis[i][:]) for i in range(len(M_dis)) ))
 # high_task=['mf','mh','dw2','df2','dh2','mw']
@@ -105,30 +130,30 @@ import csv
 # T_iter=3 # the interval time of to sequential shots
 # Dis=Read_D(d_file,R_v,To,T_iter)
 # #print(Dis)
-# ########################################. Event Generation 
+# ########################################. Event Generation
 # global task_dic
 # ins_m_dic={'15':{'df2':0.7,'df3':0.7,'df':0.7,'ds':0.9,'dh2':0.69,'dh':0.69,'dw':0,'dw2':0,'dw3':0,'mf':0,'mh':0,'mh1':0,'ms':0,'mw':0},'10':{'df':0.7,'df3':0.7,'ds':0.8,'dh':0.9,'dw':0.8,'mf':0.7,'mh':0.5,'ms':0.7,'mh1':0},
-#            '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}} 
+#            '5':{'df':0.99,'df2':0.99,'df3':0.99,'ds':1,'dh':0.98,'dh2':0.98,'dw':0.8,'dw2':0.8,'dw3':0.8,'mf':0.89,'mh':0.9,'mh1':0.9,'ms':1,'mw':0.80},'0':{'df2':0,'df':0,'df3':0,'dh2':0,'dw3':0,'dh':0,'ds':0,'dw2':0,'dw':0,'mf':0,'mh':0,'ms':0,'mw':0,'mh1':0}}
 
-# #####get the correlations among windows in one layer. 
+# #####get the correlations among windows in one layer.
 # win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')
 # all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
-# # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
+# # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer.
 # lay_num=len(win_layer)
 # all_num=len(all_wins)
-############################## for simulation. 
-# # max_v=len(win_layer)-1 
-# # for i in range(len(win_layer)):    # get the 
+############################## for simulation.
+# # max_v=len(win_layer)-1
+# # for i in range(len(win_layer)):    # get the
 # #     for j in range(i, len(win_layer)):
 # #         d=min(abs(j-i),max_v-j+i+1)
 # #         co[i][j]=d
-# #         co[j][i]=d 
+# #         co[j][i]=d
 
 # global f_num
 # global f_up
 # global p_floor
 # global w_num
-# f_num=2 
+# f_num=2
 # f_up=1
 # p_floor=3
 # w_num=32
@@ -139,9 +164,29 @@ import csv
 
 
 class Controller:
-    def __init__(self, all_num, lay_num, Wap_ty_set=[], report=[], task_dic={}, ins_m_dic={}, Dis=[], f_num=2, f_up=1,
-                 p_floor=3, w_num=32, To=5, T=0, T_total=0, Drone_num=2, Dic_M_W=[], fire_floors=[], hum_floors=[],
-                 win_floors=[], M_dis={}):
+    def __init__(
+        self,
+        all_num,
+        lay_num,
+        Wap_ty_set=[],
+        report=[],
+        task_dic={},
+        ins_m_dic={},
+        Dis=[],
+        f_num=2,
+        f_up=1,
+        p_floor=3,
+        w_num=32,
+        To=5,
+        T=0,
+        T_total=0,
+        Drone_num=2,
+        Dic_M_W=[],
+        fire_floors=[],
+        hum_floors=[],
+        win_floors=[],
+        M_dis={},
+    ):
         self.State = -1 * (np.ones([all_num, 4]))
         Table = {}
         self.win_floors = win_floors
@@ -149,12 +194,12 @@ class Controller:
         self.fire_floors = fire_floors
         self.hum_floors = hum_floors
         self.begin_monitor = 0
-        Table['fire'] = set()
-        Table['smoke'] = set()
-        Table['human'] = set()
-        Table['window'] = set()
+        Table["fire"] = set()
+        Table["smoke"] = set()
+        Table["human"] = set()
+        Table["window"] = set()
         self.to_monitor = False
-        Table['ext'] = set()
+        Table["ext"] = set()
         self.Table = Table
         self.report = report
         self.lay_num = lay_num  # not sure if we keep this
@@ -167,7 +212,7 @@ class Controller:
         self.Record_state = {}  # [t][f] or [t][h] for record for human state and fire state.
         for i in task_dic.keys():
             self.Task[i] = set()
-            # for rules:
+        # for rules:
         self.f_num = f_num
         self.f_up = f_up
         self.p_floor = p_floor
@@ -183,7 +228,7 @@ class Controller:
         self.T = T
         self.Dis = Dis
         self.ins_m_dic = ins_m_dic
-        # for Tabu search. 
+        # for Tabu search.
         self.MaxTabuSize = 100000
         self.NeigSize = 500  # 500
         self.stopTurn = 20  # 500
@@ -213,7 +258,7 @@ class Controller:
             k = k + la_num * ni
             nn.append(k)
         nn = list(set(nn))
-        return (nn)
+        return nn
 
     #     def increase_fire(self):
     #         #random.seed(time.time())
@@ -232,12 +277,12 @@ class Controller:
     #         return neigh
     def Gen_Task(self, first):  # Define all tasks according to 'plicy', report and collected data.
         if first:
-            self.Task['df'].update(set(self.report))
+            self.Task["df"].update(set(self.report))
             if policy == 2 or policy == 3:
-                self.Task['df3'].update(set(self.report))
+                self.Task["df3"].update(set(self.report))
         else:
-            self.Task['df3'] = set()
-        tmp = copy.deepcopy(self.Table['fire'])
+            self.Task["df3"] = set()
+        tmp = copy.deepcopy(self.Table["fire"])
         tmp.update(self.report)
         layers = self.all_num // self.lay_num
         if first:
@@ -247,48 +292,48 @@ class Controller:
                 if i >= 0 and i < all_num // lay_num:
                     # print(f"sorry",all_num//lay_num)
                     n = n + self.get_neigh(i * (lay_num), self.lay_num, self.lay_num)
-            self.Task['dw'].update(n)
+            self.Task["dw"].update(n)
         else:
-            self.Task['dw'] = set()
+            self.Task["dw"] = set()
         if first:
             n = []
             for i in self.fire_floors:
                 if i >= 0 and i < all_num // lay_num:
                     n = n + self.get_neigh(i * lay_num, self.lay_num, self.lay_num)
-            self.Task['df'].update(n)
+            self.Task["df"].update(n)
             n = []
             for i in self.hum_floors:
                 if i >= 0 and i < all_num // lay_num:
                     n = n + self.get_neigh(i * lay_num, self.lay_num, self.lay_num)
-            self.Task['dh'].update(n)
+            self.Task["dh"].update(n)
             # self.Task['df'].update(n)
         else:
-            self.Task['dh'] = set()
+            self.Task["dh"] = set()
             ################################################# risky area detection.
         if not first:
             n2 = []
-            for i in list(self.Table['fire']):
+            for i in list(self.Table["fire"]):
                 n2 = self.get_neigh(i, self.lay_num, 1)
                 for j in range(2):
                     if i // self.lay_num < (layers - j):
                         n2 = n2 + self.get_neigh(i + j * self.lay_num, lay_num, 1)
-                self.Task['df2'].update(n2)
-                ############################################################
+                self.Task["df2"].update(n2)
+        ############################################################
         if not first:
-            self.Task['mf'].update(list(self.Table['fire']))
+            self.Task["mf"].update(list(self.Table["fire"]))
             # self.Task['ms'].update(list(self.Table['smoke']))
-            tp = list(self.Table['fire'])
+            tp = list(self.Table["fire"])
             # fire_floors=set([i//self.lay_num for i in tp]+[i//self.lay_num+1 for i in tp])
             # print(f"see fire_floors {fire_floors}")
-            for i in list(self.Table['human']):
+            for i in list(self.Table["human"]):
                 if i // self.lay_num in self.fire_floors:
-                    self.Task['mh'].update([i])
+                    self.Task["mh"].update([i])
                 else:
-                    self.Task['mh1'].update([i])
+                    self.Task["mh1"].update([i])
             # self.Task['mh'].update(list(self.Table['human']))
-            self.Task['dh2'].update(list(self.Table['human']))
+            self.Task["dh2"].update(list(self.Table["human"]))
             # print(self.Task)
-            self.Task['dw2'].update(list(self.Table['fire'] - self.Table['window']))  # close to broken
+            self.Task["dw2"].update(list(self.Table["fire"] - self.Table["window"]))  # close to broken
             # self.Task['df']=set()
 
     def First_task(self):  # this one need to implemented! according to report, task and table.
@@ -307,15 +352,16 @@ class Controller:
             la_w = [self.cu_wp] * self.Drone_num
         for i in range(self.Drone_num):
             M_set = dict(zip(self.M_set_split[i], [self.Ma_set.get(i) for i in self.M_set_split[i]]))
-            drone = Drone(i, self.Wap_ty_set, M_set, self.Dis, self.task_dic, self.ins_m_dic, la_w[i], self.cu_time, T,
-                          T_total)
+            drone = Drone(
+                i, self.Wap_ty_set, M_set, self.Dis, self.task_dic, self.ins_m_dic, la_w[i], self.cu_time, T, T_total
+            )
             Drones.append(drone)
         return Drones, Wap_dic
 
     def Gen_Ma(self):
         tmp = [list(list(self.Task.values())[k]) for k in range(len(self.Task.values()))]
         self.IM_set = list(set(itertools.chain.from_iterable(tmp)))
-        for i in self.IM_set:  # how to judge if it is already be generated? 
+        for i in self.IM_set:  # how to judge if it is already be generated?
             if self.Ma_set.get(i) == None:
                 self.Ma_set[i] = M_a(i, [], [], [])  # initial last visiting time is -1
         for i in list(self.Task.keys()):
@@ -343,8 +389,11 @@ class Controller:
             M_fre = {}
             for i, j in self.Ma_set.items():
                 M_fre[i] = max(
-                    [(self.T_max * (self.task_dic.get(j.task[i])[1]) if self.task_dic.get(j.task[i])[1] != 0 else 1) for
-                     i in range(len(j.task))])
+                    [
+                        (self.T_max * (self.task_dic.get(j.task[i])[1]) if self.task_dic.get(j.task[i])[1] != 0 else 1)
+                        for i in range(len(j.task))
+                    ]
+                )
             for i, j in self.Ma_set.items():
                 # M_fre[i]=max([(600*(self.task_dic.get(j.task[i])[1]) if self.task_dic.get(j.task[i])[1]!=0 else 1 ) for i in range(len(j.task))])
                 #    M_fre[i]=max([(self.T*(self.task_dic.get(j.task[i])[1]) if self.task_dic.get(j.task[i])[1]!=0 else 1 ) for i in range(len(j.task))])
@@ -354,12 +403,16 @@ class Controller:
                     max_si = max([self.task_dic.get(j.task[i])[0] for i in range(len(j.task))])
                     si_tasks = [j.task[i] for i in range(len(j.task)) if self.task_dic.get(j.task[i])[0] == max_si]
                     max_fre = max(
-                        [(self.T_max * (self.task_dic.get(si_t)[1]) if self.task_dic.get(si_t)[1] != 0 else 1) for si_t
-                         in si_tasks])
+                        [
+                            (self.T_max * (self.task_dic.get(si_t)[1]) if self.task_dic.get(si_t)[1] != 0 else 1)
+                            for si_t in si_tasks
+                        ]
+                    )
                     M_fre[i] = max_si * max_fre
                 elif par == 1:
-                    M_fre[
-                        i] = 1  # max([(self.T_max*(self.task_dic.get(j.task[i])[1]) if self.task_dic.get(j.task[i])[1]!=0 else 1 ) for i in range(len(j.task))])
+                    M_fre[i] = (
+                        1  # max([(self.T_max*(self.task_dic.get(j.task[i])[1]) if self.task_dic.get(j.task[i])[1]!=0 else 1 ) for i in range(len(j.task))])
+                    )
                 elif par == 2:
                     M_fre[i] = 1
             # print(f"check items",self.Ma_set.items)
@@ -394,10 +447,10 @@ class Controller:
         tmp = [list(list(self.Task.values())[k]) for k in range(len(self.Task.values()))]
         old_IM = self.IM_set
         self.IM_set = list(set(itertools.chain.from_iterable(tmp)))
-        Ma_new = {};
-        add_M = [];
+        Ma_new = {}
+        add_M = []
         update_M = []
-        for i in self.IM_set:  # how to judge if it is already be generated? 
+        for i in self.IM_set:  # how to judge if it is already be generated?
             Ma_new[i] = M_a(i, [], [], [])
             if self.Ma_set.get(i) == None:
                 add_M.append(i)
@@ -430,7 +483,8 @@ class Controller:
                     Ma_new[j].end = Ma_new[j].end + [self.T_total]
                     if par == 0:
                         max_si = max(
-                            [self.task_dic.get(self.Ma_set[j].task[iii])[0] for iii in range(len(self.Ma_set[j].task))])
+                            [self.task_dic.get(self.Ma_set[j].task[iii])[0] for iii in range(len(self.Ma_set[j].task))]
+                        )
                         si = self.task_dic.get(i)[0]
                         # print(f"compare ",max_si,si)
                         if si > max_si:
@@ -464,7 +518,8 @@ class Controller:
                     if len(remove_task) != 0:
                         for m in remove_task:
                             index = [k for k in range(len(self.Record_Ma[i].task)) if self.Record_Ma[i].task[k] == m][
-                                -1]
+                                -1
+                            ]
                             self.Record_Ma[i].end[index] = at_t * 60
         self.Ma_set = Ma_new
         if old_IM != self.IM_set:
@@ -481,8 +536,11 @@ class Controller:
                     max_si = max([self.task_dic.get(j.task[i])[0] for i in range(len(j.task))])
                     si_tasks = [j.task[i] for i in range(len(j.task)) if self.task_dic.get(j.task[i])[0] == max_si]
                     max_fre = max(
-                        [(self.T_max * (self.task_dic.get(si_t)[1]) if self.task_dic.get(si_t)[1] != 0 else 1) for si_t
-                         in si_tasks])
+                        [
+                            (self.T_max * (self.task_dic.get(si_t)[1]) if self.task_dic.get(si_t)[1] != 0 else 1)
+                            for si_t in si_tasks
+                        ]
+                    )
                     M_fre[i] = max_si * max_fre
                 elif par == 1:
                     M_fre[i] = 1
@@ -520,7 +578,7 @@ class Controller:
         cu_t = self.cu_time
         Tl_com = defaultdict(list)
         for i in range(len(P_list)):
-            P = P_list[i][0:ww[i][0]]
+            P = P_list[i][0 : ww[i][0]]
             TL = Get_TL([Wap_dic.get(i) for i in P], self.Dis, cu_t)
             # print(f"check TL {TL}")
             if len(TL) > 0:
@@ -561,8 +619,8 @@ class Controller:
                             conclusion[tar].pop(m)
                         except:
                             pass
-                        if tar == 'fire':
-                            self.Table['ext'].update([m])
+                        if tar == "fire":
+                            self.Table["ext"].update([m])
                         Update = True
                         Replan = True
         Table2 = copy.deepcopy(self.Table)
@@ -570,7 +628,7 @@ class Controller:
             tmp = list(j.keys())
             # print(f"see the accuracy {j}")
             if len(set(tmp) - Table2.get(str(ii))) != 0:
-                if str(ii) in ['fire', 'human']:
+                if str(ii) in ["fire", "human"]:
                     Replan = True
                 Update = True
                 Table2[str(ii)].update(tmp)
@@ -592,8 +650,8 @@ class Controller:
                 Replan = True
                 # print(f" enter monitoring phase {tt}")
         return Update, Replan, Table2, enter_monitor
-        ############################################
 
+    ############################################
     def track(self, Sim, P_list, sim_logging_file, check_slot, Wap_dic, start_time, cu_time):
         # with open(sim_logging_file, mode="a", newline="") as rewardfile:
         #     fieldnames = [
@@ -626,15 +684,15 @@ class Controller:
                                 conclusion[tar].pop(m)
                             except:
                                 pass
-                            if tar == 'fire':  ####2024 If detected fire disappear.
-                                self.Table['ext'].update([m])
+                            if tar == "fire":  ####2024 If detected fire disappear.
+                                self.Table["ext"].update([m])
                             Update = True
                             Replan = True
             Table2 = copy.deepcopy(self.Table)
             for ii, j in conclusion.items():
                 tmp = list(j.keys())
                 if len(set(tmp) - Table2.get(str(ii))) != 0:  ### Detected new events
-                    if str(ii) in ['fire', 'human']:
+                    if str(ii) in ["fire", "human"]:
                         Replan = True  # 2024 comment it for stopping event-driven
                     Update = True
                     Table2[str(ii)].update(tmp)
@@ -651,7 +709,7 @@ class Controller:
                     enter_monitor = True
                     Replan = True
                     print(f"Enter monitoring phase {tt}")
-            print(f"Current Table at {tt - 1} {Table2}")
+            print(f"Current Table at {tt-1} {Table2}")
             return Update, Replan, Table2, enter_monitor
 
         def Where(tt):  # Return the drone's waypoint at time tt.
@@ -668,8 +726,8 @@ class Controller:
                 else:
                     where.append((0, P_list[d][0]))
             return where
-            ##################################### Combine the arrival times at each waypoint
 
+        ##################################### Combine the arrival times at each waypoint
         D = self.Dis
         Table2 = copy.deepcopy(self.Table)
         # log=open(logfile,'a')
@@ -731,19 +789,21 @@ class Controller:
             ww = Where(tt)
             return False, False, Table2, tt - start_time, ww, False, True
         ############################################################
-        tasks = ['df', 'dh', 'dw']
+        tasks = ["df", "dh", "dw"]
         if cu_time == 0:  # if current time is 0,
             for tk in tasks:
                 check_fire = self.Task.get(tk)
                 self.perception[tk] = dict(zip(list(check_fire), [1] * len(check_fire)))
         for i in range(len(timeline)):
             tt = timeline[i]
-            if self.begin_monitor != 0 and self.begin_monitor == tt - start_time and self.to_monitor == False:  # If start monitor?
+            if (
+                self.begin_monitor != 0 and self.begin_monitor == tt - start_time and self.to_monitor == False
+            ):  # If start monitor?
                 ww = Where(tt)
                 self.to_monitor = True
                 self.disappear = defaultdict(dict)
                 return True, True, Table2, tt - start_time, ww, True, False
-            ####################### Check update to decide if to re-plan the motion. 
+            ####################### Check update to decide if to re-plan the motion.
             if int(tt) == int(check_t):
                 Update, Replan, Table2, enter_monitor = check_update()
                 if (Update == True and Replan == True) or enter_monitor == True:
@@ -751,29 +811,29 @@ class Controller:
                     return Update, Replan, Table2, tt - start_time, ww, enter_monitor, False
                 else:
                     check_t = check_t + check_slot
-                    ############################################Get the simulated status
+            ############################################Get the simulated status
             try:
-                fire = Sim.get(tt)['f']
-                fire_state = Sim.get(tt)['f_s']
+                fire = Sim.get(tt)["f"]
+                fire_state = Sim.get(tt)["f_s"]
             except:
                 fire = []
                 fire_state = []
             try:
-                human = Sim.get(tt)['h']
-                human_state = Sim.get(tt)['h_s']
+                human = Sim.get(tt)["h"]
+                human_state = Sim.get(tt)["h_s"]
             except:
                 human = []
                 human_state = []
             try:
-                window = Sim.get(tt)['w']
+                window = Sim.get(tt)["w"]
             except:
                 window = []
             self.Record_state[tt] = {}
-            self.Record_state[tt]['f_s'] = []
-            self.Record_state[tt]['h_s'] = []
-            targets = ['fire', 'human', 'window']
-            s_p = ['f', 'h', 'w']
-            ################################# Check what events disappeared. 
+            self.Record_state[tt]["f_s"] = []
+            self.Record_state[tt]["h_s"] = []
+            targets = ["fire", "human", "window"]
+            s_p = ["f", "h", "w"]
+            ################################# Check what events disappeared.
             for i in range(len(targets)):
                 try:
                     remove = list(self.Table.get(targets[i]) - set(Sim.get(tt).get(s_p[i])))
@@ -783,16 +843,16 @@ class Controller:
                             self.disappear[targets[i]][m] = 0
                 except:
                     pass
-            if self.disappear.get('fire') != None:
-                dis_fire = self.disappear.get('fire').keys()
-            if self.disappear.get('human') != None:
-                dis_hum = self.disappear.get('human').keys()
-            ###################################################### 
+            if self.disappear.get("fire") != None:
+                dis_fire = self.disappear.get("fire").keys()
+            if self.disappear.get("human") != None:
+                dis_hum = self.disappear.get("human").keys()
+            ######################################################
             for w in P_com.get(tt):
                 cov = Wap_dic.get(w).cover  ## 2024 logging coverage
                 ty = Wap_dic.get(w).ty
-                see = [];
-                dis_see = [];
+                see = []
+                dis_see = []
                 check_area = []
                 dis_see.append([n for n in cov if n in dis_fire])
                 dis_see.append([n for n in cov if n in dis_hum])
@@ -802,7 +862,7 @@ class Controller:
                 for tk in tasks:
                     if len(self.perception[tk]) != 0:
                         check_area = check_area + [n for n in cov if n in list(self.perception[tk].keys())]
-                tasks = ['df', 'dh', 'dw']
+                tasks = ["df", "dh", "dw"]
                 for i in range(len(targets)):
                     if len(see[i]) != 0:
                         acc = self.ins_m_dic.get(str(int(ty))).get(tasks[i])
@@ -898,7 +958,7 @@ class Drone:  # WPC   # All Monitoring areas with tasks
                 cov_dic = dict(zip(w_id, cov))  # cover current monitoring area not
                 co = copy.deepcopy(cov_com)
                 M = copy.deepcopy(self.IM_set)
-                W = [];
+                W = []
                 C = []
                 while len(M) > 0:
                     co.sort(key=lambda s: len(s[0]), reverse=True)  # sort first
@@ -921,24 +981,55 @@ class Drone:  # WPC   # All Monitoring areas with tasks
             Wap_set = list(self.Cu_Wap_ty[kind])
         if len(Wap_set) != 0:
             Wap_set.append(Wap(0, [], 0, []))
-            Wap_dic = dict(zip([Wap_set[i].id for i in range(len(Wap_set))], [Wap_set[i] for i in range(len(Wap_set))]))
+            Wap_dic = dict(
+                zip([Wap_set[i].id for i in range(len(Wap_set))], [Wap_set[i] for i in range(len(Wap_set))])
+            )
             if case == 3:
                 # P,cu_t=Greedy_TSP(kind,self.Cu_Wap_ty,self.Ma_set,self.Dis,self.task_dic, self.ins_m_dic,self.cu_wp,self.cu_time,self.cu_time+self.T)
-                P, cu_t = Greedy_TSP(kind, self.Cu_Wap_ty, self.Ma_set, self.Dis, self.task_dic, self.ins_m_dic,
-                                     self.cu_wp, self.cu_time, min(self.cu_time + self.T, self.T_total))
+                P, cu_t = Greedy_TSP(
+                    kind,
+                    self.Cu_Wap_ty,
+                    self.Ma_set,
+                    self.Dis,
+                    self.task_dic,
+                    self.ins_m_dic,
+                    self.cu_wp,
+                    self.cu_time,
+                    min(self.cu_time + self.T, self.T_total),
+                )
                 # print(f"why case 3 is same {kind} {case} {P}")
             else:
                 if case == 11 or case == 12:
-                    P, cu_t = Greedy_SMT(case, self.Cu_Wap_ty, self.Ma_set, self.Dis, self.task_dic, self.ins_m_dic,
-                                         self.cu_wp, self.cu_time, min(self.cu_time + self.T, self.T_total))
+                    P, cu_t = Greedy_SMT(
+                        case,
+                        self.Cu_Wap_ty,
+                        self.Ma_set,
+                        self.Dis,
+                        self.task_dic,
+                        self.ins_m_dic,
+                        self.cu_wp,
+                        self.cu_time,
+                        min(self.cu_time + self.T, self.T_total),
+                    )
                 # P,cu_t=Greedy_WPS(case,Wap_set,self.Ma_set,self.Dis,self.task_dic, self.ins_m_dic,self.cu_wp,self.cu_time,self.T_total,self.T_total)
                 # P,cu_t=Greedy_WPS(case,Wap_set,self.Ma_set,self.Dis,self.task_dic, self.ins_m_dic,self.cu_wp,self.cu_time,self.cu_time+self.T,self.T_total)
                 # print(f"make the plan from {self.cu_time} to {min(self.cu_time+self.T,self.T_total)}")
                 # print(f"make plan from {(self.cu_time)/60} {(min(self.cu_time+self.T,self.T_total))/60} ")
                 else:
-                    P, cu_t = Greedy_Min(case, 1, Wap_set, self.Ma_set, self.Dis, self.task_dic, self.ins_m_dic,
-                                         self.cu_wp, self.cu_time, min(self.cu_time + self.T, self.T_total),
-                                         self.T_total, self.Cu_Wap_ty)
+                    P, cu_t = Greedy_Min(
+                        case,
+                        1,
+                        Wap_set,
+                        self.Ma_set,
+                        self.Dis,
+                        self.task_dic,
+                        self.ins_m_dic,
+                        self.cu_wp,
+                        self.cu_time,
+                        min(self.cu_time + self.T, self.T_total),
+                        self.T_total,
+                        self.Cu_Wap_ty,
+                    )
                 # print(f"should not be same {kind} {case} {P}")
                 #         if case==5:
                 #             P,cu_t=Tabu(P,Wap_set,self.Ma_set,self.Dis,self.task_dic, self.ins_m_dic,self.cu_wp,self.cu_time,self.cu_time+self.T,self.NeigSize,self.MaxTabuSize,self.stopTurn,
@@ -962,13 +1053,13 @@ class Drone:  # WPC   # All Monitoring areas with tasks
 
 
 def Get_sim(rseed, a, output, time_slot, lay_num=12):  # here a is a window!!!!!
-    Sim_fire(rseed, a, output, time_slot)  # write the simulation in a file.
-    Timeline = pd.read_csv(output, sep='/ ', engine='python')
+    Sim_fire(rseed, a, output, time_slot, lay_num)  # write the simulation in a file.
+    Timeline = pd.read_csv(output, sep="/ ", engine="python")
     Sim = defaultdict(dict)
     Sim_real = defaultdict(dict)
     win = []
-    firs = list(Timeline['f'])
-    tmp = [i[1:-1].split(', ') for i in firs]
+    firs = list(Timeline["f"])
+    tmp = [i[1:-1].split(", ") for i in firs]
     all_fire = set()
     for i in tmp:
         try:
@@ -978,18 +1069,19 @@ def Get_sim(rseed, a, output, time_slot, lay_num=12):  # here a is a window!!!!!
     hum_floors = set([i // lay_num for i in all_fire] + [i // lay_num + 1 for i in all_fire])
     fire_floors = set([i // lay_num for i in all_fire])
     win_floors = set(
-        [i // lay_num for i in all_fire] + [i // lay_num - 1 for i in all_fire])  # this layer and the lower layer.
+        [i // lay_num for i in all_fire] + [i // lay_num - 1 for i in all_fire]
+    )  # this layer and the lower layer.
     # print(f"ss {all_floors}")
     for index, row in Timeline.iterrows():
         # print(row)
-        tmp = row['f'][1:-1].split(', ')
-        tmps = row['f_s'][1:-1].split(', ')
+        tmp = row["f"][1:-1].split(", ")
+        tmps = row["f_s"][1:-1].split(", ")
         # print(f"check  {tmp}")
-        if len(tmp) == 1 and tmp[0] == '':
-            Sim[row['t']]['f'] = []
-            Sim_real[row['t']]['f'] = []
-            Sim[row['t']]['f_s'] = []
-            Sim_real[row['t']]['f_s'] = []
+        if len(tmp) == 1 and tmp[0] == "":
+            Sim[row["t"]]["f"] = []
+            Sim_real[row["t"]]["f"] = []
+            Sim[row["t"]]["f_s"] = []
+            Sim_real[row["t"]]["f_s"] = []
         else:
             fire = [int(tmp[i]) for i in range(len(tmp))]
             fire_state = [int(tmps[i]) for i in range(len(tmp))]
@@ -1003,11 +1095,11 @@ def Get_sim(rseed, a, output, time_slot, lay_num=12):  # here a is a window!!!!!
             #             else:
             #                 tmp=[]
             #             human_floors=list(set(tmp+[fire[i]//lay_num+2 for i in range(len(fire))]))
-            Sim[row['t']]['f'] = fire
-            Sim[row['t']]['f_s'] = fire_state
-            Sim_real[row['t']]['f'] = fire
-            Sim_real[row['t']]['f_s'] = fire_state
-        tmp = row['w'][1:-1].split(', ')
+            Sim[row["t"]]["f"] = fire
+            Sim[row["t"]]["f_s"] = fire_state
+            Sim_real[row["t"]]["f"] = fire
+            Sim_real[row["t"]]["f_s"] = fire_state
+        tmp = row["w"][1:-1].split(", ")
         old_win = copy.deepcopy(win)
         # if len(tmp)>0:
         winn = [int(tmp[i]) for i in range(len(tmp))]
@@ -1025,31 +1117,31 @@ def Get_sim(rseed, a, output, time_slot, lay_num=12):  # here a is a window!!!!!
         #                     win.append(i)
         # print(f"check {fire} {win}")
         # win=list(set(win+old_win))
-        Sim[row['t']]['w'] = win
-        Sim_real[row['t']]['w'] = win
+        Sim[row["t"]]["w"] = win
+        Sim_real[row["t"]]["w"] = win
         # except:
         # Sim[row['t']]['w']=[]
-        tmp = row['h'][1:-1].split(', ')
-        tmps = row['h_s'][1:-1].split(', ')
+        tmp = row["h"][1:-1].split(", ")
+        tmps = row["h_s"][1:-1].split(", ")
         try:
             humm = [int(tmp[i]) for i in range(len(tmp))]
             hum_s = [int(tmps[i]) for i in range(len(tmp))]
             h_s = dict(zip(humm, hum_s))
-            hum = [];
+            hum = []
             state = []
             for i in humm:
                 if i // lay_num in hum_floors:
                     hum.append(i)
                     state.append(h_s.get(i))
-            Sim[row['t']]['h'] = hum
-            Sim[row['t']]['h_s'] = state
-            Sim_real[row['t']]['h'] = hum
-            Sim_real[row['t']]['h_s'] = state
+            Sim[row["t"]]["h"] = hum
+            Sim[row["t"]]["h_s"] = state
+            Sim_real[row["t"]]["h"] = hum
+            Sim_real[row["t"]]["h_s"] = state
         except:
-            Sim[row['t']]['h'] = []
-            Sim[row['t']]['h_s'] = []
-            Sim_real[row['t']]['h_s'] = []
-            Sim_real[row['t']]['h'] = []
+            Sim[row["t"]]["h"] = []
+            Sim[row["t"]]["h_s"] = []
+            Sim_real[row["t"]]["h_s"] = []
+            Sim_real[row["t"]]["h"] = []
     return Sim, Sim_real, fire_floors, hum_floors, win_floors
 
 
@@ -1068,13 +1160,19 @@ def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=0, fire
     # global R_v # drone speed
     # global To # loiter time
     st_nor = np.array([0, -1, 0])
-    drone = pd.read_csv('../data/drone_char.csv', sep=' ')  # Drone sensor configuration
+    drone = pd.read_csv("../data/drone_char.csv", sep=" ")  # Drone sensor configuration
     ######## Loading waypoint information
-    building = pd.read_csv('../data/dbh_stu.csv', delimiter=' ')
-    Cov_file = '../data2/wp_cover_'
-    d_file = '../data/Travel_Distance.csv'
-    m_d_file = '../data/M_Distance.csv'
-    win_fname = '../data/win_ro_f_'
+    building = pd.read_csv("../data/dbh_stu.csv", delimiter=" ")
+    Cov_file = "../data2/wp_cover_"
+    d_file = "../data/Travel_Distance.csv"
+    m_d_file = "../data/M_Distance.csv"
+    win_fname = "../data/win_ro_f_"
+    ########2024 Comment:
+    Cov_file = "./2024_test/wp_cover_"
+    d_file = "./2024_test/Travel_Distance.csv"
+    m_d_file = "./2024_test/M_Distance.csv"
+    win_fname = "./2024_test/win_ro_f_"
+    #########################
     #### 2024 Generating waypoints for drones
     Wap_set, Wap_ty = Write_WP(Drone_Num, D, faces, R_v, To, st_nor, drone, building, Cov_file, d_file, win_fname)
     wps = [Wap_set[i].loc for i in range(len(Wap_set))]
@@ -1083,22 +1181,67 @@ def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=0, fire
     ## for partition ###############
     W_M_set, Id_M_set = Write_M_WP(Drone_Num, D, faces, R_v, To, st_nor, drone, building, Cov_file, d_file, win_fname)
     dic_M_W = dict(zip(Id_M_set, W_M_set))
+    # D=Get_VG_D_M(dic_M_W,building,R_v,1,m_d_file)
+
     M_dis = Read_D(m_d_file, R_v=1, To=0, T_iter=0)
-    high_task = ['mf', 'mh', 'dw2', 'df2', 'dh2', 'mw']
+    high_task = ["mf", "mh", "dw2", "df2", "dh2", "mw"]
     co = [Wap_set[i].cover for i in range(len(Wap_set))]
     in_loc = [0, -20, 0]  ###Initial loaction of drones
-    # D=Get_VG_D(wps,building,R_v,1,d_file,in_loc)
+    # D = Get_VG_D(wps, building, R_v, 1, d_file, in_loc)
     T_iter = 3  # the interval time of to sequential shots
     Dis = Read_D(d_file, R_v, To, T_iter)
     ########################################. Event Generation
     ins_m_dic = {
-        '15': {'df2': 0.7, 'df3': 0.7, 'df': 0.7, 'ds': 0.9, 'dh2': 0.69, 'dh': 0.69, 'dw': 0, 'dw2': 0, 'dw3': 0,
-               'mf': 0, 'mh': 0, 'mh1': 0, 'ms': 0, 'mw': 0},
-        '10': {'df': 0.7, 'df3': 0.7, 'ds': 0.8, 'dh': 0.9, 'dw': 0.8, 'mf': 0.7, 'mh': 0.5, 'ms': 0.7, 'mh1': 0},
-        '5': {'df': 0.99, 'df2': 0.99, 'df3': 0.99, 'ds': 1, 'dh': 0.98, 'dh2': 0.98, 'dw': 0.8, 'dw2': 0.8, 'dw3': 0.8,
-              'mf': 0.89, 'mh': 0.9, 'mh1': 0.9, 'ms': 1, 'mw': 0.80},
-        '0': {'df2': 0, 'df': 0, 'df3': 0, 'dh2': 0, 'dw3': 0, 'dh': 0, 'ds': 0, 'dw2': 0, 'dw': 0, 'mf': 0, 'mh': 0,
-              'ms': 0, 'mw': 0, 'mh1': 0}}
+        "15": {
+            "df2": 0.7,
+            "df3": 0.7,
+            "df": 0.7,
+            "ds": 0.9,
+            "dh2": 0.69,
+            "dh": 0.69,
+            "dw": 0,
+            "dw2": 0,
+            "dw3": 0,
+            "mf": 0,
+            "mh": 0,
+            "mh1": 0,
+            "ms": 0,
+            "mw": 0,
+        },
+        "10": {"df": 0.7, "df3": 0.7, "ds": 0.8, "dh": 0.9, "dw": 0.8, "mf": 0.7, "mh": 0.5, "ms": 0.7, "mh1": 0},
+        "5": {
+            "df": 0.99,
+            "df2": 0.99,
+            "df3": 0.99,
+            "ds": 1,
+            "dh": 0.98,
+            "dh2": 0.98,
+            "dw": 0.8,
+            "dw2": 0.8,
+            "dw3": 0.8,
+            "mf": 0.89,
+            "mh": 0.9,
+            "mh1": 0.9,
+            "ms": 1,
+            "mw": 0.80,
+        },
+        "0": {
+            "df2": 0,
+            "df": 0,
+            "df3": 0,
+            "dh2": 0,
+            "dw3": 0,
+            "dh": 0,
+            "ds": 0,
+            "dw2": 0,
+            "dw": 0,
+            "mf": 0,
+            "mh": 0,
+            "ms": 0,
+            "mw": 0,
+            "mh1": 0,
+        },
+    }
     start_sim = 5
     Enter_time = 0
     rseed = sim_seed
@@ -1108,9 +1251,9 @@ def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=0, fire
     output = f"./result/sim/sim_{a}_{file_name}_{Drone_Num}_{va}_{policy}.csv"
     global time_slot
     Sim, Sim_real, fire_floors, hum_floors, win_floors = Get_sim(rseed, a, output, time_slot, lay_num)
-    fire_source = Sim.get(start_sim).get('f')
+    fire_source = Sim.get(start_sim).get("f")
     ##############################################
-    sim_logging_file = f"./sim_log_2024/log_seed_{sim_seed}_droneNum_{Drone_Num}_fires_{va}_simtime_{int(simulation_time // 60)}min_plan_{int(plan_duration / 60)}min.csv"
+    sim_logging_file = f"./sim_log_2024/log_seed_{sim_seed}_droneNum_{Drone_Num}_fires_{va}_simtime_{int(simulation_time//60)}min_plan_{int(plan_duration/60)}min.csv"
     with open(sim_logging_file, mode="w", newline="") as file:  ## Logging Actions
         fieldnames = [
             "seed",
@@ -1128,9 +1271,23 @@ def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=0, fire
     for T_total in [simulation_time]:
         for t_f in [plan_duration]:
             # c_orgin=Controller(all_num,lay_num,Wap_ty,fire_source,task_dic,ins_m_dic,Dis,Drone_num=Drone_Num,T_total=T_total,fire_floors=fire_floors,hum_floors=hum_floors,win_floors=win_floors)
-            c_orgin = Controller(all_num, lay_num, Wap_ty, fire_source, task_dic, ins_m_dic, Dis, To=To,
-                                 Drone_num=Drone_Num, Dic_M_W=dic_M_W, T_total=T_total, fire_floors=fire_floors,
-                                 hum_floors=hum_floors, win_floors=win_floors, M_dis=M_dis)
+            c_orgin = Controller(
+                all_num,
+                lay_num,
+                Wap_ty,
+                fire_source,
+                task_dic,
+                ins_m_dic,
+                Dis,
+                To=To,
+                Drone_num=Drone_Num,
+                Dic_M_W=dic_M_W,
+                T_total=T_total,
+                fire_floors=fire_floors,
+                hum_floors=hum_floors,
+                win_floors=win_floors,
+                M_dis=M_dis,
+            )
             c_orgin.First_task()
             # outlog.write(f"random:{rseed}T:{T_total}\n")
             miss = 0
@@ -1152,13 +1309,14 @@ def run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=0, fire
                             P_list.append(P)
                         print(f"-------Drone Flight Planning------{P_list}--")
                         time_slot = int(
-                            plan_duration / 60)  ## 2024 Set checking slot to plan duration, to stop event-driven
-                        update, Replan, Table, cu_time, ww, enter_monitor, done = c.track(Sim_real, P_list,
-                                                                                          sim_logging_file, time_slot,
-                                                                                          Wap_dic, start_sim,
-                                                                                          c.cu_time)  # here check_slot=1 s
-                        Task = c.Update_Task(update, Replan, P_list, ww, cu_time, Table, Wap_dic,
-                                             enter_monitor)  # update task.update Ma, cu_time.
+                            plan_duration / 60
+                        )  ## 2024 Set checking slot to plan duration, to stop event-driven
+                        update, Replan, Table, cu_time, ww, enter_monitor, done = c.track(
+                            Sim_real, P_list, sim_logging_file, time_slot, Wap_dic, start_sim, c.cu_time
+                        )  # here check_slot=1 s
+                        Task = c.Update_Task(
+                            update, Replan, P_list, ww, cu_time, Table, Wap_dic, enter_monitor
+                        )  # update task.update Ma, cu_time.
                         print(f"------Update Task at {cu_time} min---- {Task}-----")
                         c.cu_time = cu_time * 60
                         Drones, Wap_dic = c.Coordiniation(t_f, T_total, [i[1] for i in ww])
@@ -1180,14 +1338,26 @@ if __name__ == "__main__":
     except:
         #  T_f=600
         Drone_Num = 10
-        file_name = 'see'
+        file_name = "see"
         va = 1
     par = 0
     improve_time = 0
-    task_dic = {'df': [1, 0.002], 'df3': [2, 0.002], 'ds': [1, 0.001], 'dh': [1, 0.002], 'dw': [1.5, 0.002],
-                'mf': [3, 0.007], 'mh1': [1.5, 0.007], 'mh': [3, 0.007], 'dw2': [3, 0.007], 'dw3': [1, 0.008],
-                'df2': [4, 0.007], 'dh2': [3, 0.006], 'mw': [3, 0.005]}
-    Drone_Num = 3
+    task_dic = {
+        "df": [1, 0.002],
+        "df3": [2, 0.002],
+        "ds": [1, 0.001],
+        "dh": [1, 0.002],
+        "dw": [1.5, 0.002],
+        "mf": [3, 0.007],
+        "mh1": [1.5, 0.007],
+        "mh": [3, 0.007],
+        "dw2": [3, 0.007],
+        "dw3": [1, 0.008],
+        "df2": [4, 0.007],
+        "dh2": [3, 0.006],
+        "mw": [3, 0.005],
+    }
+    Drone_Num = 4
     plan_duration = 300
     simulation_time = 3600
     R_v = 3  # Drone flying speed
@@ -1195,7 +1365,7 @@ if __name__ == "__main__":
     Record_flag = False
     policy = 2
     # policy= 0: detection threshold ==0.6
-    # policy =1: detection threshold =1 
+    # policy =1: detection threshold =1
     # policy =2: give the df2 at the beginning, and detection threshold== 0.6
     global time_slot
     time_slot = 1
@@ -1205,16 +1375,18 @@ if __name__ == "__main__":
         threshold = 0.5
     if policy == 1 or policy == 3:
         threshold = 0.1
-    #####get the correlations among windows in one layer. 
-    win_layer = pd.read_csv('../data/layer_win.csv', sep=' ')
-    all_wins = pd.read_csv('../data/all_win.csv', sep=' ')
-    # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer. 
+    #####get the correlations among windows in one layer.
+    # win_layer = pd.read_csv("../data/layer_win.csv", sep=" ")
+    # all_wins = pd.read_csv("../data/all_win.csv", sep=" ")
+    win_layer = pd.read_csv("./2024_test/layer_win.csv", sep=" ")
+    all_wins = pd.read_csv("./2024_test/all_win.csv", sep=" ")
+    # co=np.zeros((len(win_layer),len(win_layer)))  # get the distance among the same layer.
     lay_num = len(win_layer)
     all_num = len(all_wins)
-    ############################## for fire simulation. 
-    floor_num = 12
-    rooms_d = pd.read_csv('../data/rooms.csv', sep=',')
-    room_AF = dict(zip(list(rooms_d['r']), (zip(list(rooms_d['w']), list(rooms_d['d'])))))
+    ############################## for fire simulation.
+    floor_num = 20
+    rooms_d = pd.read_csv("../data/rooms.csv", sep=",")
+    room_AF = dict(zip(list(rooms_d["r"]), (zip(list(rooms_d["w"]), list(rooms_d["d"])))))
     all_room = len(room_AF) * floor_num
-    ############################################# 
-    run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=1, fire_number=3)
+    #############################################
+    run_sim(Drone_Num, plan_duration, simulation_time, R_v, To, sim_seed=1, fire_number=3) # fire number is the initial number of fire spots

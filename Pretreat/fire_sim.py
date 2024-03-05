@@ -366,7 +366,7 @@ class Simulator:
         #print(fire_time,fire_state,human_state)
         f.close()
 
-floor_num=12
+floor_num=20
 win_layer=pd.read_csv('../data/layer_win.csv',sep=' ')   # 32 
 all_wins=pd.read_csv('../data/all_win.csv',sep=' ')
 room_win=pd.read_csv('../data/window_room.csv',sep=' ')
@@ -434,7 +434,7 @@ for i, j in win_to_rooms.items():
 #print(win_c_dict)
 #if __name__ == '__main__':
 
-def Sim_fire(seed,a,outputfile,slot):
+def Sim_fire(seed,a,outputfile,slot, lay_num):
     #print(f"source {a} {seed} {slot}")
     random.seed(seed)
     windows=[random.random()<P_open for i in range(len(list(win_to_rooms.keys()))*floor_num)]
